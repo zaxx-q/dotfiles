@@ -1,0 +1,24 @@
+{{- if ne .distro "unsupported" -}}
+#!/usr/bin/env bash
+# Install the tmux plugins listed in tmux.conf. tpm itself is a chezmoi
+# external (see .chezmoiexternal.toml.tmpl). Runs again when tmux.conf changes.
+#
+# tmux.conf: {{ include "dot_config/tmux/tmux.conf" | sha256sum }}
+{{ template "prelude" . }}
+
+_info "INSTALL TMUX PLUGINS"
+
+tpm_path="${XDG_CONFIG_HOME}/tmux/plugins/tpm"
+
+if [ ! -x "${tpm_path}/bin/install_plugins" ]; then
+  _warning "tpm isn't at '${tpm_path}', run 'chezmoi apply --refresh-externals' then force this script again"
+  exit 0
+fi
+
+if ! command -v tmux >/dev/null 2>&1; then
+  _warning "tmux isn't installed, skipping the plugins"
+  exit 0
+fi
+
+"${tpm_path}/bin/install_plugins"
+{{- end }}

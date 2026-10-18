@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+# Scale (zoom) the focused output by static amount or +/- increments. This works
+# with 1 or multiple monitors.
+#
+# Examples:
+#   output-scale    # Cycle between supported scales (1, 1.25, 1.5, 2, etc.)
+#   output-scale 2  # Set the current scale to 2 (zoom in)
+#   output-scale +  # Scale up in 0.25 increments
+#   output-scale -  # Scale down in 0.25 increments
+
+if [ -z "${NIRI_SOCKET}" ]; then
+  echo "This script is only available with the desktop environment, aborting!" >&2
+  exit 1
+fi
+
+readonly SCALES=(1.0 1.25 1.5 1.75 2.0 2.5 3.0 4.0 5.0)
+
+scale_to_int() {
+  # Convert scale string such as 1.5 or 1 to an integer (150, 100).
+  awk -v v="${1}" 'BEGIN {printf "%.0f", v * 100}'
+}
+
+scale_exists() {
+  # Confirm the scale is a valid choice.
+  local value="${1}"
+
+  for scale in "${SCALES[@]}"; do
+    [ "$(scale_to_int "${scale}")" == "${value}" ] && return 0
+  done
+
+  return 1
+}
+
+int_to_scale() {
+  # Convert an integer scale back into its cannonical scale value.
+  local value="${1}"
+
+  for scale in "${SCALES[@]}"; do
+    if [ "$(scale_to_int "${scale}")" == "${value}" ]; then
+      printf "%s\n" "${scale}"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+scale_index() {
+  # Find the index of a supported scale.
+  local value="${1}"
+
+  for scale in "${!SCALES[@]}"; do
+    if [ "$(scale_to_int "${SCALES[${scale}]}")" == "${value}" ]; then
+      printf "%s\n" "${scale}"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+get_output_geometry() {
+  local state="${1}"
+  local name="${2}"
+
+  jq --raw-output --arg output "${name}" '
+    .[$output].logical
+    | "\(.x) \(.y) \(.width) \(.height) \(.scale)"
+  ' <<<"${state}"
+}
+
+get_output_size() {
+  local state="${1}"
+  local name="${2}"
+
+  jq --raw-output --arg output "${name}" '
+    .[$output].logical
+    | "\(.width) \(.height)"
+  ' <<<"${state}"
+}
+
+position_outputs() {
+  local state_before="${1}"
+  local focused="${2}"
+  local dx="${3}"
+  local dy="${4}"
+  local old_x="${5}"
+  local old_y="${6}"
+  local old_w="${7}"
+  local old_h="${8}"
+
+  while read -r name x y; do
+    if [ "${name}" == "${focused}" ]; then
+      continue
+    fi
+
+    local new_x="${x}"
+    local new_y="${y}"
+
+    ((x >= old_x + old_w)) && new_x=$((x + dx))
+    ((y >= old_y + old_h)) && new_y=$((y + dy))
+
+    if [[ "${new_x}" != "${x}" || "${new_y}" != "${y}" ]]; then
+      niri msg output "${name}" position set "${new_x}" "${new_y}"
+    fi
+
+  done < <(
+    jq -r '
+      to_entries[]
+      | "\(.key) \(.value.logical.x) \(.value.logical.y)"
+    ' <<<"${state_before}"
+  )
+}
+
+adjust_scale() {
+  local input="${1}"
+  local current_scale_index="${2}"
+
+  case "${input}" in
+  +)
+    local next_scale_index="$((current_scale_index + 1))"
+    ((next_scale_index >= ${#SCALES[@]})) && next_scale_index="${current_scale_index}"
+    printf '%s\n' "${SCALES[${next_scale_index}]}"
+    ;;
+
+  -)
+    local next_scale_index="$((current_scale_index - 1))"
+    ((next_scale_index < 0)) && next_scale_index=0
+    printf '%s\n' "${SCALES[${next_scale_index}]}"
+    ;;
+
+  cycle)
+    local next_scale_index="$(((current_scale_index + 1) % ${#SCALES[@]}))"
+    printf '%s\n' "${SCALES[${next_scale_index}]}"
+    ;;
+
+  *)
+    local key
+    key="$(scale_to_int "${input}")"
+
+    if scale_exists "${key}"; then
+      int_to_scale "${key}"
+    else
+      echo "'${input}' is not valid, please choose from: ${SCALES[*]}" >&2
+      return 1
+    fi
+    ;;
+  esac
+}
+
+main() {
+  local state_before
+  state_before="$(niri msg --json outputs)"
+
+  local focused_output
+  focused_output="$(niri msg --json focused-output | jq -r '.name')"
+
+  read -r old_x old_y old_w old_h current_scale <<<"$(get_output_geometry "${state_before}" "${focused_output}")"
+
+  local current_scale_int current_scale_index
+  current_scale_int="$(scale_to_int "${current_scale}")"
+  current_scale_index="$(scale_index "${current_scale_int}")"
+
+  local new_scale
+  if ! new_scale="$(adjust_scale "${1:-cycle}" "${current_scale_index}")"; then
+    exit 1
+  fi
+
+  niri msg output "${focused_output}" scale "${new_scale}"
+
+  local state_after
+  state_after="$(niri msg --json outputs)"
+
+  read -r new_w new_h <<<"$(get_output_size "${state_after}" "${focused_output}")"
+
+  local dx=$((new_w - old_w))
+  local dy=$((new_h - old_h))
+
+  position_outputs \
+    "${state_before}" \
+    "${focused_output}" \
+    "${dx}" \
+    "${dy}" \
+    "${old_x}" \
+    "${old_y}" \
+    "${old_w}" \
+    "${old_h}"
+
+  notify-send "Output ${focused_output} scale: ${new_scale}x"
+}
+
+main "${@}"

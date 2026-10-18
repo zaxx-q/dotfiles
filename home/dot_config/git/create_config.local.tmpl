@@ -1,0 +1,23 @@
+{{ if or .name .email .signingkey -}}
+[user]
+{{- if .name }}
+  name = {{ .name }}
+{{- end }}
+{{- if .email }}
+  email = {{ .email }}
+{{- end }}
+{{- if .signingkey }}
+  signingkey = {{ .signingkey }}
+{{- end }}
+{{ end }}
+# [commit] gpgsign and [tag] gpgSign are turned on in ~/.config/git/config. If
+# you don't have a GPG key yet, set them to false in here:
+#
+#[commit]
+#  gpgsign = false
+#[tag]
+#  gpgSign = false
+
+[delta]
+  # If you prefer side by side diffs, uncomment this.
+  #side-by-side = true

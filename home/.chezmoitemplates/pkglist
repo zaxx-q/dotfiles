@@ -1,0 +1,10 @@
+{{- /*
+  Prints the effective package list, one quoted name per line:
+  (base + extras) - skip. Called with a dict: base, extras, skip.
+*/ -}}
+{{- $skip := .skip -}}
+{{- range (concat .base .extras) -}}
+{{-   if not (has . $skip) }}
+  {{ . | quote }}
+{{-   end -}}
+{{- end -}}

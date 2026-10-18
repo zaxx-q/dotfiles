@@ -1,0 +1,44 @@
+[core]
+  editor = zed --wait
+  pager = delta
+  symlinks = true
+  autocrlf = input
+[delta]
+  navigate = true
+
+[init]
+  defaultBranch = main
+
+[interactive]
+  diffFilter = delta --color-only
+
+[diff]
+  tool = zed
+
+[difftool "zed"]
+  cmd = zed --wait --diff \"$LOCAL\" \"$REMOTE\"
+
+[merge]
+  tool = meld
+  conflictStyle = zdiff3
+
+[mergetool]
+  keepBackup = false
+  prompt = false
+
+[mergetool "meld"]
+  cmd = meld \"$LOCAL\" \"$BASE\" \"$REMOTE\" --output \"$MERGED\"
+
+[commit]
+  gpgsign = true
+
+[tag]
+  gpgSign = true
+
+[include]
+  path = ~/.config/git/config.local
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true

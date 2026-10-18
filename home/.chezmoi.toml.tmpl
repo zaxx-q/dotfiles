@@ -1,0 +1,78 @@
+{{- /*
+  Runs on `chezmoi init`. The answers end up in ~/.config/chezmoi/chezmoi.toml
+  and are only asked once. To be asked again run `chezmoi init --prompt`, or
+  edit the file with `chezmoi edit-config`.
+
+  `chezmoi init` writes the whole file again, so everything else that's in
+  [data] right now (your per machine overrides) is copied over below. Without
+  that, running `init` again would silently drop them.
+
+  This is the chezmoi version of what bootstrap + dotfriedrice used to detect:
+  the distro, WSL / container, GUI eligibility and your name + email.
+*/ -}}
+
+{{- $os := .chezmoi.os -}}
+{{- $id := "" -}}
+{{- $like := "" -}}
+{{- $wsl := false -}}
+{{- if eq $os "linux" -}}
+{{-   $id = .chezmoi.osRelease.id -}}
+{{-   $like = (get .chezmoi.osRelease "idLike" | default $id) -}}
+{{-   if (.chezmoi.kernel.osrelease | lower | contains "microsoft") -}}
+{{-     $wsl = true -}}
+{{-   end -}}
+{{- end -}}
+
+{{- /* arch | debian | fedora | darwin | unsupported */ -}}
+{{- $distro := "unsupported" -}}
+{{- if eq $os "darwin" -}}
+{{-   $distro = "darwin" -}}
+{{- else if eq $os "linux" -}}
+{{-   if or (contains "debian" $like) (contains "ubuntu" $like) (eq $id "debian") (eq $id "ubuntu") -}}
+{{-     $distro = "debian" -}}
+{{-   else if or (eq $id "fedora") (contains "fedora" $like) -}}
+{{-     $distro = "fedora" -}}
+{{-   else if or (eq $id "arch") (contains "arch" $like) -}}
+{{-     $distro = "arch" -}}
+{{-   end -}}
+{{- end -}}
+
+{{- $container := or (env "OS_IN_CONTAINER" | eq "1") (stat "/.dockerenv" | not | not) (stat "/run/.containerenv" | not | not) -}}
+
+{{- /* Only vanilla-ish Arch and Fedora outside of WSL / containers get the desktop. */ -}}
+{{- $guiEligible := and (or (eq $distro "arch") (eq $distro "fedora")) (not $wsl) (not $container) -}}
+
+{{- $name := promptStringOnce . "name" "Full name (git user.name)" -}}
+{{- $email := promptStringOnce . "email" "Email address (git user.email)" -}}
+{{- $signingkey := promptStringOnce . "signingkey" "GPG signing key ID for git (leave empty to skip)" "" -}}
+{{- $gui := false -}}
+{{- if $guiEligible -}}
+{{-   $gui = promptBoolOnce . "gui" "Set up the niri desktop environment and GUI apps" true -}}
+{{- end -}}
+
+{{- /* Start from what's in [data] now, so overrides survive, then set what init owns. */ -}}
+{{- $data := dict -}}
+{{- range $key, $value := . -}}
+{{-   if ne $key "chezmoi" -}}
+{{-     $_ := set $data $key $value -}}
+{{-   end -}}
+{{- end -}}
+{{- $_ := set $data "name" $name -}}
+{{- $_ := set $data "email" $email -}}
+{{- $_ := set $data "signingkey" $signingkey -}}
+{{- $_ := set $data "distro" $distro -}}
+{{- $_ := set $data "wsl" $wsl -}}
+{{- $_ := set $data "container" $container -}}
+{{- $_ := set $data "gui" $gui -}}
+# Written by `chezmoi init` (home/.chezmoi.toml.tmpl). name, email, signingkey
+# and gui are your answers, distro, wsl and container are detected.
+#
+# Per machine overrides can go in [data] too and are kept when `chezmoi init`
+# runs again. Everything that can be overridden is in home/.chezmoidata/.
+# For example:
+#
+#   autostart_niri = true
+#
+#   [data.packages.fedora]
+#     cli_extras = ["keyd", "trans", "earlyoom"]
+{{ dict "data" $data | toToml }}

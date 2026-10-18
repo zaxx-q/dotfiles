@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Reset a few things back to normal after recording.
+#
+# Examples:
+#   rec-stop
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+if [ -z "${NIRI_SOCKET}" ]; then
+  echo "This script is only available with the desktop environment, aborting!" >&2
+  exit 1
+fi
+
+GHOSTTY_FONT_SIZE=11
+
+# Restore from the backup if it exists. Using mv here is safe because otherwise
+# we would run cp + rm on the file resulting in the same outcome.
+if [ -f "${HISTFILE}.bak" ]; then
+  mv "${HISTFILE}.bak" "${HISTFILE}"
+fi
+
+perl -pi -e '
+  s|^    layout { struts|    // layout { struts|g;
+  s/^input { mouse { scroll-factor .*; }; }/input { mouse { scroll-factor 2.0; }; }/g;
+  s/^window-rule { open-maximized .*; }/window-rule { open-maximized false; }/g
+' "${XDG_CONFIG_HOME}/niri/config.kdl.local"
+
+perl -pi -e "s/^font-size = .*/font-size = ${GHOSTTY_FONT_SIZE}/g" "${XDG_CONFIG_HOME}/ghostty/config.local"
+dfr-reload-app ghostty
+
+output-scale 1.0
+
+cat <<EOF
+-> Shell history has been restored to ${HISTFILE}
+
+Nice work, here's a few things to maybe do:
+  - Restore tmux sessions by running tmux and then Leader + CTRL + r
+  - Open a new Ghostty tab or window to show font-size adjustments
+  - Close all isolated profile browser windows
+    - Example: pkill -f "firefox .* -P isolated"
+EOF

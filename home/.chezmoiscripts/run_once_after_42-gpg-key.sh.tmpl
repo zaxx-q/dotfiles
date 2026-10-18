@@ -1,0 +1,65 @@
+{{- if and (ne .distro "unsupported") .email .name -}}
+#!/usr/bin/env bash
+# Create a GPG key for your email if you don't have one yet. It asks for a
+# passphrase so it only runs with a terminal. If it's skipped, run it by hand:
+#   chezmoi state delete-bucket --bucket=scriptState && chezmoi apply
+#
+# identity: {{ .name }} <{{ .email }}>
+{{ template "prelude" . }}
+
+_info "CREATING GPG KEY"
+
+export GNUPGHOME="${XDG_CONFIG_HOME}/gnupg"
+
+email={{ template "shquote" .email }}
+name={{ template "shquote" .name }}
+
+if [[ "$(gpg --export --armor "${email}" 2>/dev/null)" =~ "PGP PUBLIC KEY" ]]; then
+  _skipping "'${email}' already exists"
+else
+  if [ ! -t 0 ]; then
+    _warning "No terminal to ask for a passphrase, skipping the GPG key"
+    exit 0
+  fi
+
+  mkdir -p "${GNUPGHOME}"
+  chmod 700 "${GNUPGHOME}"
+
+  while true; do
+    printf "Please set a passphrase (password) for your key: "
+    read -sr passphrase
+
+    if [[ ! ${passphrase} =~ [^[:space:]]+ ]]; then
+      printf "\n"
+      printf "%bError: Please enter at least 1 non-space character%b\n" "${C_RED}" "${C_RESET}" >&2
+      continue
+    fi
+
+    printf "\n\nPlease confirm your passphrase: "
+    read -sr passphrase_confirm
+
+    [ "${passphrase}" = "${passphrase_confirm}" ] && break
+
+    printf "\n"
+    printf "%bError: Your passphrase did not match, please try again%b\n" "${C_RED}" "${C_RESET}" >&2
+  done
+
+  printf "\n\nGenerating GPG key...\n\n"
+
+  gpg --batch --gen-key <<GPG_PARAMS
+     Key-Type: 1
+     Key-Length: 3072
+     Subkey-Type: 1
+     Subkey-Length: 3072
+     Name-Real: ${name}
+     Name-Email: ${email}
+     Passphrase: ${passphrase}
+     Expire-Date: 1y
+GPG_PARAMS
+fi
+
+_info "SHOWING PUBLIC GPG KEY"
+
+# Delete the last line in a way that works on Linux and macOS.
+gpg --list-keys "${email}" | sed '$d'
+{{- end }}

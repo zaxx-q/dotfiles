@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Toggle between standard struts/corners and flush layout in Niri.
+# Keeps gaps at 1 and focus-ring active.
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+config="${XDG_CONFIG_HOME:-${HOME}/.config}/niri/config.kdl"
+
+if [[ ! -e "${config}" ]]; then
+  printf 'Niri config not found: %s\n' "${config}" >&2
+  exit 1
+fi
+
+config="$(readlink -f "${config}")"
+
+status="$(
+  python3 - "${config}" <<'EOF'
+import sys, re
+
+config_path = sys.argv[1]
+
+with open(config_path, "r", encoding="utf-8") as f:
+    content = f.read()
+
+m = re.search(r'// Toggleable struts\s*\n\s*(\/?-?struts\s*\{)', content)
+if not m:
+    print("Error: Could not find '// Toggleable struts' marker in config", file=sys.stderr)
+    sys.exit(1)
+
+is_normal = "/-struts" not in m.group(1)
+
+if is_normal:
+    content = re.sub(r'(// Toggleable struts\s*\n\s*)struts\s*\{', r'\1/-struts {', content)
+    content = re.sub(r'(// Toggleable corner-radius\s*\n\s*)geometry-corner-radius\s+\d+', r'\1geometry-corner-radius 0', content)
+    status = "Flush mode (zero struts/corners)"
+else:
+    content = re.sub(r'(// Toggleable struts\s*\n\s*)/-struts\s*\{', r'\1struts {', content)
+    content = re.sub(r'(// Toggleable corner-radius\s*\n\s*)geometry-corner-radius\s+\d+', r'\1geometry-corner-radius 20', content)
+    status = "Normal layout"
+
+with open(config_path, "w", encoding="utf-8") as f:
+    f.write(content)
+
+print(status)
+EOF
+)"
+
+if ! niri msg action load-config-file; then
+  printf 'Niri rejected updated config.\n' >&2
+  exit 1
+fi
+
+notify-send "Niri layout: ${status}" 2>/dev/null || true
+printf 'Niri layout: %s\n' "${status}"

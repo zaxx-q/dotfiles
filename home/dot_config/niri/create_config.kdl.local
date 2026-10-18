@@ -1,0 +1,16 @@
+// Add your custom overrides and new additions here.
+
+// ----------------------------------------------------------------------------
+// Outputs (monitors, etc.)
+// Find details about them by running: niri msg outputs
+// ----------------------------------------------------------------------------
+
+// Set external display as the left monitor and have it get used by default.
+// output "DP-2" {
+//     position x=0 y=0
+//     focus-at-startup
+// }
+
+// output "eDP-1" {
+//     position x=2560 y=0
+// }

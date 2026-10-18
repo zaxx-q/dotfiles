@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Toggle notifications being silent or not.
+
+makoctl mode -t do-not-disturb
+
+if makoctl mode | grep --quiet "do-not-disturb"; then
+  notify-send --urgency critical "Silenced notifications"
+else
+  notify-send --urgency critical "Enabled notifications"
+fi

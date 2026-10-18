@@ -1,0 +1,509 @@
+{{- if ne .distro "unsupported" -}}
+#!/usr/bin/env bash
+# Install system packages. Was `install_packages` + `detect_and_prepare_*` in the
+# old dotfriedrice script. Re-runs whenever the package lists in
+# .chezmoidata/packages.yaml (or this script) change.
+{{- if eq .distro "arch" }}
+#
+# pacman options: {{ include ".system/etc/pacman.d/01-options.conf" | sha256sum }}
+{{- end }}
+{{ template "prelude" . }}
+
+_info "INSTALL PACKAGES ({{ .distro }})"
+
+{{ template "effective-packages" . }}
+
+{{- /* ---------------------------------------------------------------- */ -}}
+{{- /* Fedora                                                           */ -}}
+{{- /* ---------------------------------------------------------------- */ -}}
+{{ if eq .distro "fedora" }}
+{{- $p := .packages.fedora }}
+PACKAGES=({{ template "pkglist" (dict "base" $p.cli "extras" $p.cli_extras "skip" $p.cli_skip) }}
+)
+{{- if .gui }}
+PACKAGES_GUI=({{ template "pkglist" (dict "base" $p.gui "extras" $p.gui_extras "skip" $p.gui_skip) }}
+)
+{{- else }}
+PACKAGES_GUI=()
+{{- end }}
+AUR_PACKAGES=()
+
+# Weak dependencies, see packages.fedora.weak_deps in .chezmoidata/packages.yaml.
+DNF_INSTALL_WEAK_DEPS="{{ if $p.weak_deps }}1{{ else }}0{{ end }}"
+PACKAGES_DNF_WEAK_DEPS_SKIP=({{ range $p.weak_deps_skip }}{{ . | quote }} {{ end }})
+
+# COPR repositories (GUI only), defaults + extras - skip.
+{{- $coprs := dict "base" $p.coprs "extras" $p.coprs_extras "skip" $p.coprs_skip }}
+FEDORA_COPRS=({{ template "pkglist" $coprs }}
+)
+FEDORA_COPRS_SKIP=({{ range $p.coprs_skip }}{{ . | quote }} {{ end }})
+{{ end }}
+
+{{- /* ---------------------------------------------------------------- */ -}}
+{{- /* Arch                                                             */ -}}
+{{- /* ---------------------------------------------------------------- */ -}}
+{{ if eq .distro "arch" }}
+{{- $p := .packages.arch }}
+PACKAGES=({{ template "pkglist" (dict "base" $p.cli "extras" $p.cli_extras "skip" $p.cli_skip) }}
+)
+{{- if .gui }}
+PACKAGES_GUI=({{ template "pkglist" (dict "base" $p.gui "extras" $p.gui_extras "skip" $p.gui_skip) }}
+)
+AUR_PACKAGES=({{ template "pkglist" (dict "base" (concat $p.aur $p.aur_gui) "extras" (concat $p.aur_extras $p.aur_gui_extras) "skip" (concat $p.aur_skip $p.aur_gui_skip)) }}
+)
+{{- else }}
+PACKAGES_GUI=()
+AUR_PACKAGES=({{ template "pkglist" (dict "base" $p.aur "extras" $p.aur_extras "skip" $p.aur_skip) }}
+)
+{{- end }}
+{{ end }}
+
+{{- /* ---------------------------------------------------------------- */ -}}
+{{- /* Debian / Ubuntu                                                  */ -}}
+{{- /* ---------------------------------------------------------------- */ -}}
+{{ if eq .distro "debian" }}
+{{- $p := .packages.debian }}
+PACKAGES=({{ template "pkglist" (dict "base" $p.cli "extras" $p.cli_extras "skip" $p.cli_skip) }}
+)
+{{ end }}
+
+{{- /* ---------------------------------------------------------------- */ -}}
+{{- /* macOS                                                            */ -}}
+{{- /* ---------------------------------------------------------------- */ -}}
+{{ if eq .distro "darwin" }}
+{{- $p := .packages.darwin }}
+PACKAGES=({{ template "pkglist" (dict "base" $p.brew "extras" $p.brew_extras "skip" $p.brew_skip) }}
+)
+PACKAGES_CASK=({{ template "pkglist" (dict "base" $p.cask "extras" $p.cask_extras "skip" $p.cask_skip) }}
+)
+{{ end }}
+
+{{- if or (eq .distro "fedora") (eq .distro "arch") }}
+
+# -----------------------------------------------------------------------------
+# Hardware detection (GUI only): GPU drivers, Wi-Fi and Bluetooth
+# -----------------------------------------------------------------------------
+
+_gpu_pkg() {
+  PACKAGES+=("${@}")
+}
+
+detect_and_prepare_gpu() {
+  _info "DETECT AND PREPARE GPU"
+
+  local kernel_package=
+  local os_kernel
+  os_kernel="$(uname -r)"
+
+  case "${DISTRO}" in
+  arch)
+    # Arch has multiple kernel variants, each with its own -headers package.
+    case "${os_kernel}" in
+    *cachyos-lts*) kernel_package="linux-cachyos-lts-headers" ;;
+    *cachyos*) kernel_package="linux-cachyos-headers" ;;
+    *arch*) kernel_package="linux-headers" ;;
+    *lts*) kernel_package="linux-lts-headers" ;;
+    *zen*) kernel_package="linux-zen-headers" ;;
+    *hardened*) kernel_package="linux-hardened-headers" ;;
+    *)
+      _error "'${os_kernel}' Linux kernel was detected but can't determine which linux-*-headers package to install, aborting!"
+      ;;
+    esac
+    ;;
+  fedora)
+    # Fedora ships a single unified kernel so kernel-devel / kernel-headers
+    # always match the running kernel. kernel-devel is what akmod-nvidia needs
+    # to build the nvidia module on boot.
+    kernel_package="kernel-devel"
+    ;;
+  esac
+
+  local lspci_output=
+  lspci_output="$(lspci)"
+
+  local gpu_line=
+  gpu_line="$(grep --ignore-case -E "VGA|3D|Display controller" <<<"${lspci_output}" | head -n 1 || true)"
+
+  [ -z "${gpu_line}" ] && _error "No GPU detected, aborting!"
+
+  echo "${gpu_line}"
+
+  _unsupported_gpu() {
+    printf "\n%s\n\nIf you think it should work, please open an issue with the above device output.\n\n" "${1}"
+    _error "Unsupported${2:+ ${2}} GPU found, aborting!"
+  }
+
+  case "${gpu_line}" in
+  *NVIDIA*)
+    _gpu_pkg "${kernel_package}"
+
+    # Avoid recreating the file every time, if a user changes it manually then
+    # let's not clobber their changes.
+    if [ ! -f /etc/modprobe.d/nvidia.conf ]; then
+      # This is taken from: https://wiki.archlinux.org/title/NVIDIA
+      echo "options nvidia-drm modeset=1" | sudo tee /etc/modprobe.d/nvidia.conf >/dev/null
+    fi
+
+    # Without this, niri takes ~1 GB of GPU memory on boot. After this patch
+    # on my machine it only uses about 60 MB.
+    # This is taken from: https://github.com/niri-wm/niri/wiki/Nvidia
+    if [ ! -f /etc/nvidia/nvidia-application-profiles-rc.d/50-limit-free-buffer-pool-in-wayland-compositors.json ]; then
+      sudo mkdir -p /etc/nvidia/nvidia-application-profiles-rc.d
+      cat <<'JSON' | sudo tee /etc/nvidia/nvidia-application-profiles-rc.d/50-limit-free-buffer-pool-in-wayland-compositors.json >/dev/null
+{
+    "rules": [
+        {
+            "pattern": {
+                "feature": "procname",
+                "matches": "niri"
+            },
+            "profile": "Limit Free Buffer Pool On Wayland Compositors"
+        }
+    ],
+    "profiles": [
+        {
+            "name": "Limit Free Buffer Pool On Wayland Compositors",
+            "settings": [
+                {
+                    "key": "GLVidHeapReuseRatio",
+                    "value": 0
+                }
+            ]
+        }
+    ]
+}
+JSON
+    fi
+
+    # Choose driver based on generation.
+    case "${gpu_line}" in
+    *RTX\ [2-9][0-9]* | *GTX\ 16*)
+      case "${DISTRO}" in
+      arch) _gpu_pkg "nvidia-open-dkms" "nvidia-utils" "lib32-nvidia-utils" ;;
+      fedora)
+        _gpu_pkg "akmod-nvidia" "xorg-x11-drv-nvidia-cuda"
+        _gpu_pkg "nvidia-driver-libs.i686"
+        ;;
+      esac
+      ;;
+    *GTX\ [7-9]* | *GTX\ 10*)
+      case "${DISTRO}" in
+      arch) AUR_PACKAGES+=("nvidia-580xx-dkms" "nvidia-580xx-utils" "lib32-nvidia-580xx-utils") ;;
+      fedora)
+        # Since driver v590 and later (Fedora 44+), support for GTX 800/900/10
+        # was dropped. These GPUs need the v580 legacy driver on Fedora 44+.
+        # On older Fedora releases the current akmod-nvidia still supports them.
+        local fedora_ver
+        fedora_ver="$(rpm -E %fedora)"
+
+        if ((fedora_ver >= 44)); then
+          _gpu_pkg "akmod-nvidia-580xx" "xorg-x11-drv-nvidia-580xx" "xorg-x11-drv-nvidia-580xx-cuda"
+        else
+          _gpu_pkg "akmod-nvidia" "xorg-x11-drv-nvidia-cuda"
+          _gpu_pkg "nvidia-driver-libs.i686"
+        fi
+        ;;
+      esac
+      ;;
+    *GTX\ 6*)
+      case "${DISTRO}" in
+      # GTX 600 series (Kepler) also uses the 580xx driver on Arch.
+      arch) AUR_PACKAGES+=("nvidia-580xx-dkms" "nvidia-580xx-utils" "lib32-nvidia-580xx-utils") ;;
+      # GeForce 600 series are Kepler GPUs and require the v470 legacy driver.
+      fedora) _gpu_pkg "akmod-nvidia-470xx" "xorg-x11-drv-nvidia-470xx" "xorg-x11-drv-nvidia-470xx-cuda" ;;
+      esac
+      ;;
+    *GTX\ [45]*)
+      case "${DISTRO}" in
+      arch) _unsupported_gpu "See if your GPU is listed here: https://wiki.archlinux.org/title/NVIDIA" "NVIDIA" ;;
+      # GeForce 400/500 series are Fermi GPUs and require the v390 legacy
+      # driver. WARNING: v390 is end-of-line and has no Wayland support.
+      fedora) _gpu_pkg "akmod-nvidia-390xx" "xorg-x11-drv-nvidia-390xx" "xorg-x11-drv-nvidia-390xx-cuda" ;;
+      esac
+      ;;
+    *)
+      _unsupported_gpu "See if your GPU is listed here: https://wiki.archlinux.org/title/NVIDIA" "NVIDIA"
+      ;;
+    esac
+    ;;
+  *AMD*)
+    # AMD drivers are handled automatically by the Linux kernel but let's get
+    # the Vulkan drivers so Steam and gaming works. amdgpu_top is for monitoring.
+    case "${DISTRO}" in
+    arch) _gpu_pkg "vulkan-radeon" "lib32-vulkan-radeon" "amdgpu_top" ;;
+    # corectrl is the closest monitoring / OC tool to amdgpu_top on Fedora.
+    fedora) _gpu_pkg "mesa-vulkan-drivers" "mesa-vulkan-drivers.i686" "corectrl" ;;
+    esac
+    ;;
+  *Intel*)
+    # This is for monitoring.
+    _gpu_pkg "intel-gpu-tools"
+
+    # Choose driver based on generation.
+    case "${gpu_line}" in
+    *HD\ Graphics* | *Iris* | *Xe*) _gpu_pkg "intel-media-driver" ;;
+    *2nd\ Gen* | *3rd\ Gen* | *GMA*) _gpu_pkg "libva-intel-driver" ;;
+    *) _unsupported_gpu "See if your GPU is listed here: https://wiki.archlinux.org/title/Intel_graphics" "Intel" ;;
+    esac
+    ;;
+  *Virtio* | *QXL*)
+    # The kernel already has drivers for these VM devices.
+    :
+    ;;
+  *)
+    grep --ignore-case "VGA" <<<"${lspci_output}"
+    _unsupported_gpu "Most variants of NVIDIA, AMD and Intel GPUs should all be supported." ""
+    ;;
+  esac
+}
+
+detect_and_prepare_network() {
+  _info "DETECT AND PREPARE NETWORK"
+
+  if compgen -G "/sys/class/net/*/wireless" 1>/dev/null; then
+    # iwd is the wireless daemon used when you want a standalone wireless stack
+    # separate from NetworkManager. impala (its TUI) is in the Arch repos but
+    # not packaged for Fedora, see _docs/packages.md.
+    case "${DISTRO}" in
+    arch) PACKAGES+=("impala" "iwd") ;;
+    fedora) PACKAGES+=("iwd") ;;
+    esac
+
+    echo "Wi-Fi adapter found, iwd + impala packages will be installed"
+  else
+    _skipping "Ethernet adapter found, no preparation is required"
+  fi
+}
+
+detect_and_prepare_bluetooth() {
+  _info "DETECT AND PREPARE BLUETOOTH"
+
+  if [ -d "/sys/class/bluetooth" ]; then
+    case "${DISTRO}" in
+    arch) PACKAGES+=("bluetui" "bluez") ;;
+    # bluetui isn't packaged for Fedora, see _docs/packages.md.
+    fedora) PACKAGES+=("bluez") ;;
+    esac
+
+    echo "Compatible adapter found, bluez + bluetui packages will be installed"
+  else
+    _skipping "No Bluetooth adapter was found"
+  fi
+}
+
+if [ "${GUI_ENABLED}" == "1" ]; then
+  detect_and_prepare_gpu
+  detect_and_prepare_network
+  detect_and_prepare_bluetooth
+fi
+{{- end }}
+
+{{ if eq .distro "fedora" }}
+# -----------------------------------------------------------------------------
+# Fedora
+# -----------------------------------------------------------------------------
+
+# Enable RPM Fusion free / nonfree repositories. A number of packages such as
+# ffmpeg, gimp plugins and some multimedia codecs only live in RPM Fusion on
+# Fedora. We enable both free and nonfree but only the free one is needed for
+# the defaults, nonfree is enabled for user convenience.
+if ! sudo dnf repolist enabled | grep --quiet --ignore-case "rpmfusion-free"; then
+  sudo dnf install -y \
+    "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" || true
+fi
+
+if ! sudo dnf repolist enabled | grep --quiet --ignore-case "rpmfusion-nonfree"; then
+  sudo dnf install -y \
+    "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" || true
+fi
+
+# Enable the Terra repository. A number of packages such as satty, rmpc and lact
+# are available through Terra. Only install terra-release if it's missing.
+if ! rpm -q terra-release >/dev/null 2>&1; then
+  sudo dnf install -y --nogpgcheck \
+    --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' \
+    terra-release || true
+fi
+
+# Make sure the system is up to date before installing anything new. This
+# mirrors the pacman -Syu behaviour on Arch.
+sudo dnf upgrade --refresh || true
+
+# Enable COPR repositories for GUI components.
+if [ "${GUI_ENABLED}" == "1" ]; then
+  # Disable repositories that are configured to be skipped but are currently enabled.
+  if ((${#FEDORA_COPRS_SKIP[@]} > 0)); then
+    enabled_repos="$(sudo dnf repolist enabled 2>/dev/null || true)"
+    for copr in "${FEDORA_COPRS_SKIP[@]}"; do
+      if grep --quiet --ignore-case "copr:copr.fedorainfracloud.org:${copr//\//:}" <<<"${enabled_repos}"; then
+        _skipping "COPR '${copr}' is enabled but skipped, disabling it..."
+        sudo dnf copr disable -y "${copr}" || true
+      fi
+    done
+  fi
+
+  for copr in "${FEDORA_COPRS[@]}"; do
+    # The COPR repo file path follows dnf's naming convention:
+    #   /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:owner:project.repo
+    repo_file="/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:${copr//\//:}.repo"
+
+    if [ -f "${repo_file}" ]; then
+      _skipping "COPR '${copr}' already enabled"
+    else
+      sudo dnf copr enable -y "${copr}" || true
+    fi
+  done
+fi
+
+ALL_PACKAGES=("${PACKAGES[@]}" "${PACKAGES_GUI[@]}")
+
+# Fedora ships ffmpeg-free by default, the full ffmpeg (RPM Fusion) must replace
+# it with --allowerasing so it's pulled out of the normal install and swapped.
+ffmpeg_requested=0
+install_packages=()
+for package in "${ALL_PACKAGES[@]}"; do
+  if [ "${package}" == "ffmpeg" ]; then
+    ffmpeg_requested=1
+  else
+    install_packages+=("${package}")
+  fi
+done
+
+confirm_flag=()
+[ "${PACKAGES_AUTO_CONFIRM}" == "1" ] && confirm_flag=("-y")
+
+# Make sure dnf knows about the latest metadata before installing. --best prefers
+# the highest version and --skip-broken so a single unavailable package doesn't
+# abort the whole transaction.
+sudo dnf makecache || true
+
+dnf_options=()
+if [[ "${DNF_INSTALL_WEAK_DEPS}" == "0" ]]; then
+  dnf_options+=("--setopt=install_weak_deps=False")
+elif ((${#PACKAGES_DNF_WEAK_DEPS_SKIP[@]} > 0)); then
+  dnf_options+=("--setopt=exclude_from_weak=$(IFS=,; echo "${PACKAGES_DNF_WEAK_DEPS_SKIP[*]}")")
+fi
+
+sudo dnf install "${confirm_flag[@]}" --best --skip-broken "${dnf_options[@]}" "${install_packages[@]}"
+
+# Swap ffmpeg-free for the full ffmpeg (RPM Fusion) if it was requested.
+if [[ "${ffmpeg_requested}" == "1" ]] && rpm -q ffmpeg-free >/dev/null 2>&1; then
+  sudo dnf swap ffmpeg-free ffmpeg --allowerasing -y
+fi
+
+# Mise isn't in the official Fedora repositories, install it with the official
+# standalone install script.
+if ! command -v mise >/dev/null 2>&1 && [ ! -x "${HOME}/.local/bin/mise" ]; then
+  _curl https://mise.run | sh
+fi
+{{ end }}
+
+{{ if eq .distro "arch" }}
+# -----------------------------------------------------------------------------
+# Arch
+# -----------------------------------------------------------------------------
+
+confirm_flag=()
+[ "${PACKAGES_AUTO_CONFIRM}" == "1" ] && confirm_flag=("--noconfirm")
+
+# Ensure multilib is disabled since we'll enable it with an include file, on
+# vanilla Arch it's disabled but other variants might have it enabled.
+etc_pacman_conf_path="/etc/pacman.conf"
+if grep -q "^\[multilib\]" "${etc_pacman_conf_path}"; then
+  sudo sed -i "/^\[multilib\]/,+1 s/^/#/" "${etc_pacman_conf_path}"
+fi
+
+# This isn't configurable because it has certain settings that are necessary
+# for DFR to work, such as installing 32 bit packages for GPU drivers.
+sudo install -Dm644 "{{ .chezmoi.sourceDir }}/.system/etc/pacman.d/01-options.conf" /etc/pacman.d/01-options.conf
+
+# Ensure the include file line always exists.
+if ! grep -q "Include = /etc/pacman\.d/\*\.conf" "${etc_pacman_conf_path}"; then
+  printf "\nInclude = /etc/pacman.d/*.conf\n" | sudo tee --append "${etc_pacman_conf_path}" 1>/dev/null
+fi
+
+if [ "${PACKAGES_AUTO_CONFIRM}" != "1" ] && command -v yay >/dev/null 2>&1; then
+  printf "\n:: Arch news\n\n"
+  yay -Pwwq || true
+  printf "\n---\n\nView the official Arch news site: https://archlinux.org/news/\n\n"
+fi
+
+sudo pacman -Syu "${confirm_flag[@]}" --needed "${PACKAGES[@]}" "${PACKAGES_GUI[@]}"
+
+# Install Yay (AUR) if needed.
+yay_local_version="$(yay --version 2>/dev/null | cut -d " " -f 2 || true)"
+yay_latest_version="$(git ls-remote --tags https://github.com/Jguer/yay.git |
+  grep -Eo "v?[0-9]+(\.[0-9]+){1,2}$" |
+  sort --version-sort | tail -n 1)"
+
+if [ "${yay_local_version}" != "${yay_latest_version}" ]; then
+  yay_download_path="/tmp/yay-install"
+  rm -rf "${yay_download_path}"
+  git clone https://aur.archlinux.org/yay-bin.git "${yay_download_path}"
+  (cd "${yay_download_path}" && makepkg --syncdeps --install --noconfirm)
+  rm -rf "${yay_download_path}"
+fi
+
+# Install AUR packages.
+if ((${#AUR_PACKAGES[@]} > 0)); then
+  yay_confirm_flag=()
+  [ "${PACKAGES_AUTO_CONFIRM}" == "1" ] && yay_confirm_flag=("--noconfirm" "--answerdiff" "None" "--answerclean" "None")
+
+  yay -S "${yay_confirm_flag[@]}" --needed "${AUR_PACKAGES[@]}"
+fi
+
+# GIMP plugin: GEGL effects.
+if [ "${GUI_ENABLED}" == "1" ]; then
+  gegl_plugins_path="${XDG_DATA_HOME}/gegl-0.4/plug-ins"
+  gegl_zip_path="/tmp/gegl_effectd.zip"
+
+  if [ ! -f "${gegl_plugins_path}/gegleffectspending.so" ]; then
+    rm -rf "${gegl_zip_path}"
+    _curl "https://github.com/LinuxBeaver/Gimp_Layer_Effects_Text_Styler_Plugin_GEGL_Effects/releases/download/Continual_July22_2023/gegl_effects_MAIN_PLUGIN_LinuxBinaries.zip" -o "${gegl_zip_path}"
+    mkdir -p "${gegl_plugins_path}"
+    unzip -j "${gegl_zip_path}" -d "${gegl_plugins_path}"
+    rm -rf "${gegl_zip_path}"
+  fi
+fi
+{{ end }}
+
+{{ if eq .distro "debian" }}
+# -----------------------------------------------------------------------------
+# Debian / Ubuntu
+# -----------------------------------------------------------------------------
+
+confirm_flag=()
+[ "${PACKAGES_AUTO_CONFIRM}" == "1" ] && confirm_flag=("--yes")
+
+sudo apt-get update && sudo apt-get install "${confirm_flag[@]}" --no-install-recommends "${PACKAGES[@]}"
+
+# Install Mise.
+sudo install -dm 755 /etc/apt/keyrings
+_curl https://mise.jdx.dev/gpg-key.pub | gpg --dearmor | sudo tee /etc/apt/keyrings/mise-archive-keyring.gpg 1>/dev/null
+echo "deb [signed-by=/etc/apt/keyrings/mise-archive-keyring.gpg arch=amd64] https://mise.jdx.dev/deb stable main" | sudo tee /etc/apt/sources.list.d/mise.list
+sudo apt-get update && sudo apt-get install --yes --no-install-recommends mise
+{{ end }}
+
+{{ if eq .distro "darwin" }}
+# -----------------------------------------------------------------------------
+# macOS
+# -----------------------------------------------------------------------------
+
+if ! command -v brew >/dev/null 2>&1; then
+  brew_prefix="/opt/homebrew"
+  [ "$(uname -m)" != "arm64" ] && brew_prefix="/usr/local"
+
+  if [ ! -x "${brew_prefix}/bin/brew" ]; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  fi
+
+  eval "$("${brew_prefix}/bin/brew" shellenv)"
+fi
+
+# This gets written to your zprofile later but let's set it here for this shell.
+export HOMEBREW_NO_ANALYTICS="1"
+
+brew install "${PACKAGES[@]}"
+brew install --cask "${PACKAGES_CASK[@]}"
+{{ end }}
+{{- end }}

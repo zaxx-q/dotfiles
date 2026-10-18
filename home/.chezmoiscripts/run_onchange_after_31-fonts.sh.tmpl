@@ -1,0 +1,159 @@
+{{- /*
+  Fonts, defaults + extras. An entry that contains one of the `skip` strings in
+  its URL gets dropped. Port of `install_fonts` from the old dotfriedrice.
+*/ -}}
+{{- $fonts := list -}}
+{{- range (concat .fonts.default .fonts.extras) -}}
+{{-   $url := .url -}}
+{{-   $skipped := false -}}
+{{-   range $.fonts.skip -}}
+{{-     if contains . $url -}}
+{{-       $skipped = true -}}
+{{-     end -}}
+{{-   end -}}
+{{-   if not $skipped -}}
+{{-     $fonts = append $fonts . -}}
+{{-   end -}}
+{{- end -}}
+{{- if and $fonts (ne .distro "unsupported") -}}
+#!/usr/bin/env bash
+{{ template "prelude" . }}
+
+_info "INSTALL FONTS"
+
+# "url|file name patterns, comma separated"
+FONTS=(
+{{- range $fonts }}
+  {{ printf "%s|%s" .url (join "," .files) | quote }}
+{{- end }}
+)
+
+OS_TYPE="{{ .chezmoi.os }}"
+
+windows_font_path="/mnt/c/Windows/Fonts"
+macos_font_path="${HOME}/Library/Fonts"
+linux_font_path="${XDG_DATA_HOME}/fonts"
+
+if [ "${OS_TYPE}" = "linux" ]; then
+  font_path="${linux_font_path}"
+  [ "${OS_IN_WSL}" == "1" ] && font_path="${windows_font_path}"
+else
+  font_path="${macos_font_path}"
+fi
+
+mkdir -p "${font_path}" 2>/dev/null || true
+
+# Clean up staging directory at start to prevent stale WSL detection.
+font_staging_base="/tmp/dfr-fonts"
+rm -rf "${font_staging_base}"
+
+any_font_installed=0
+wsl_staged=0
+
+for item in "${FONTS[@]}"; do
+  font_url="${item%|*}"
+  target_spec="${item#*|}"
+
+  # Split target_spec by comma into target_files array.
+  target_files=()
+  IFS=',' read -ra raw_targets <<<"${target_spec}"
+  for raw_target in "${raw_targets[@]}"; do
+    trimmed="$(echo "${raw_target}" | xargs)"
+    [ -n "${trimmed}" ] && target_files+=("${trimmed}")
+  done
+
+  # Check if all specified font files/patterns exist in font_path.
+  all_installed=1
+  for file_pattern in "${target_files[@]}"; do
+    if ! compgen -G "${font_path}/${file_pattern}" >/dev/null; then
+      all_installed=0
+      break
+    fi
+  done
+
+  if [ "${all_installed}" -eq 1 ]; then
+    _skipping "'${font_path}' already contains '${target_spec}'"
+    continue
+  fi
+
+  # Strip query parameters for extension matching and filename calculation.
+  clean_url="${font_url%%\?*}"
+  font_filename="${clean_url##*/}"
+  font_name="${font_filename%.*}"
+
+  font_tmp="${font_staging_base}/${font_name}"
+  font_tmp_extract="${font_staging_base}/${font_name}-raw"
+  font_archive="/tmp/dfr-font-${font_name}.tmp"
+
+  rm -rf "${font_tmp}" "${font_tmp_extract}" "${font_archive}"
+  mkdir -p "${font_tmp_extract}"
+
+  _curl "${font_url}" -o "${font_archive}"
+
+  # Extract based on file type into raw extraction directory.
+  case "${clean_url}" in
+  *.zip)
+    unzip -q -o "${font_archive}" -d "${font_tmp_extract}"
+    ;;
+  *.tar.gz | *.tgz | *.tar.xz)
+    tar -xf "${font_archive}" -C "${font_tmp_extract}"
+    ;;
+  *.ttf | *.otf)
+    cp "${font_archive}" "${font_tmp_extract}/${font_filename}"
+    ;;
+  *)
+    _warning "Unsupported font archive format for '${font_url}'"
+    rm -rf "${font_tmp_extract}" "${font_archive}"
+    continue
+    ;;
+  esac
+
+  rm -f "${font_archive}"
+
+  # Copy only specified target files (.ttf, .otf) into font_tmp.
+  mkdir -p "${font_tmp}"
+  for file_pattern in "${target_files[@]}"; do
+    find "${font_tmp_extract}" -type f \( -name "*.ttf" -o -name "*.otf" \) -name "${file_pattern}" -exec cp {} "${font_tmp}/" \;
+  done
+  rm -rf "${font_tmp_extract}"
+
+  if [ -z "$(ls -A "${font_tmp}")" ]; then
+    _warning "No matching font files ('${target_spec}') found in '${font_url}'"
+    rm -rf "${font_tmp}"
+    continue
+  fi
+
+  if [ "${OS_IN_WSL}" == "1" ]; then
+    wsl_staged=1
+    echo "Staged '${font_name}' (${target_spec}) for manual installation on Windows"
+  else
+    find "${font_tmp}" -type f -exec cp {} "${font_path}/" \;
+    any_font_installed=1
+    rm -rf "${font_tmp}"
+    echo "'${font_name}' (${target_spec}) installed to '${font_path}'"
+  fi
+done
+
+# On WSL 2, show manual installation steps if any font was staged.
+if [ "${OS_IN_WSL}" == "1" ] && [ "${wsl_staged}" == "1" ]; then
+  cat <<EOF
+
+Since we're in WSL 2 and we need to install Windows fonts, please do it manually.
+
+Most of it has been automated for you, from within WSL 2 perform these steps:
+
+1. cd ${font_staging_base}
+2. explorer.exe .
+3. Select all fonts, right click and INSTALL FOR ALL USERS
+4. rm -rf "${font_staging_base}"
+
+It's important step 3 is for all users not your personal user. It's also
+important step 4 is executed so this script doesn't always stage fonts.
+EOF
+fi
+
+# Update font cache on native Linux if fonts were installed.
+if [[ "${OS_TYPE}" = "linux" && "${OS_IN_WSL}" != "1" && "${any_font_installed}" == "1" ]]; then
+  fc-cache -fv
+fi
+{{- end }}

@@ -1,0 +1,51 @@
+# shellcheck disable=SC2034
+set -o errexit
+set -o pipefail
+set -o nounset
+
+C_RED=$'\e[1;31;1m'
+C_GREEN=$'\e[1;32;1m'
+C_YELLOW=$'\e[1;33;1m'
+C_BLUE=$'\e[1;34;1m'
+C_MAGENTA=$'\e[1;35;1m'
+C_CYAN=$'\e[1;36;1m'
+C_WHITE=$'\e[1;37;1m'
+C_RESET=$'\e[0m'
+
+DISTRO="{{ .distro }}"
+GUI_ENABLED="{{ if .gui }}1{{ else }}0{{ end }}"
+OS_IN_WSL="{{ if .wsl }}1{{ else }}0{{ end }}"
+OS_IN_CONTAINER="{{ if .container }}1{{ else }}0{{ end }}"
+PACKAGES_AUTO_CONFIRM="{{ if .packages.auto_confirm }}1{{ else }}0{{ end }}"
+
+XDG_CACHE_HOME="${HOME}/.cache"
+XDG_CONFIG_HOME="${HOME}/.config"
+XDG_DATA_HOME="${HOME}/.local/share"
+XDG_STATE_HOME="${HOME}/.local/state"
+
+_info() {
+  printf "\n%b:: %b%b\n\n" "${C_CYAN}" "${1}" "${C_RESET}"
+}
+
+_skipping() {
+  printf "%b%bSkipping: %b%b\n" "${2:-}" "${C_WHITE}" "${1}" "${C_RESET}"
+}
+
+_warning() {
+  printf "%b%bWarning: %b%b\n" "${2:-}" "${C_YELLOW}" "${1}" "${C_RESET}"
+}
+
+_error() {
+  printf "%bError: %b%b\n" "${C_RED}" "${1}" "${C_RESET}" >&2
+  exit 1
+}
+
+# A resilient curl, the same flags as ~/.local/bin/rcurl (which doesn't exist yet
+# when these scripts run for the first time).
+_curl() {
+  local progress="--silent"
+  [ -t 2 ] && progress="--progress-bar"
+
+  curl --show-error --fail --location --connect-timeout 10 --retry 4 \
+    --retry-all-errors --speed-limit 100 --speed-time 30 "${progress}" "${@}"
+}

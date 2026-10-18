@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+# Set a few things to avoid leaking secrets and set reasonable font sizes.
+#
+# Examples:
+#   rec-start -s  # Scales display output (zoom in)
+#   rec-start -r  # Sets niri struts to capture a 1080p region
+#   rec-start -o  # Launches and positions OBS
+#   rec-start -e  # Exit after helping prevent secrets from being leaked
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+if [ -z "${NIRI_SOCKET}" ]; then
+  echo "This script is only available with the desktop environment, aborting!" >&2
+  exit 1
+fi
+
+SCALE=
+REGION=
+OBS=
+EXIT_EARLY=
+
+GHOSTTY_FONT_SIZE=20
+
+OUTPUT_KEYLIGHT_NAME="${OUTPUT_KEYLIGHT_NAME:-HDMI-A-2}"
+OUTPUT_KEYLIGHT_COLOR="${OUTPUT_KEYLIGHT_COLOR:-#ffffff}"
+
+_usage() {
+  cat <<EOF
+
+Usage:
+  ${0} [--obs | -o] [--scale | -s OR --region | -r ] [--exit-early | -e ]
+EOF
+}
+
+while [[ "${#}" -gt 0 ]]; do
+  case "${1}" in
+  -h | --help | help)
+    _usage
+    exit
+    ;;
+  -s | --scale)
+    SCALE=1
+    GHOSTTY_FONT_SIZE=14
+    shift
+    ;;
+  -r | --region)
+    REGION=1
+    shift
+    ;;
+  -o | --obs)
+    OBS=1
+    shift
+    ;;
+  -e | --exit-early)
+    EXIT_EARLY=1
+    shift
+    ;;
+  *)
+    # Allow no arguments.
+    [ -z "${1}" ] && break
+
+    echo "Unknown argument: ${1}" >&2
+    _usage >&2
+    exit 1
+    ;;
+  esac
+done
+
+if [[ "${SCALE}" == 1 && "${REGION}" == 1 ]]; then
+  echo "You can only set --scale OR --region, not both, aborting!" >&2
+  exit 1
+fi
+
+# Only create a backup if it doesn't exist. This avoids accidentally overwriting
+# your real files if you run rec-start more than once without stopping first.
+if [ ! -f "${HISTFILE}.bak" ]; then
+  cp -a "${HISTFILE}" "${HISTFILE}.bak"
+  rm "${HISTFILE}"
+fi
+
+# Avoid adjusting font sizes or anything else.
+[ "${EXIT_EARLY}" == "1" ] && exit
+
+perl -pi -e "s/^font-size = .*/font-size = ${GHOSTTY_FONT_SIZE}/g" "${XDG_CONFIG_HOME}/ghostty/config.local"
+dfr-reload-app ghostty
+
+NIRI_CONFIG_SCALE=
+if [ "${SCALE}" == "1" ]; then
+  NIRI_CONFIG_SCALE="s/^input { mouse { scroll-factor .*; }; }/input { mouse { scroll-factor 1.0; }; }/g;"
+fi
+
+NIRI_CONFIG_REGION=
+if [ "${REGION}" == "1" ]; then
+
+  # In my config.kdl.local file I have this line in my primary output's config:
+  #
+  # // layout { struts { left 949; right 949; top 6; bottom 1031; }; }
+  #
+  # These values are optimized for a 4k display with a 1080p region. The idea
+  # is we create struts to force tiled windows into this area. You can use
+  # whatever values you want, that's why I left this regex to be greedy.
+  NIRI_CONFIG_REGION="s|^    // layout { struts|    layout { struts|g;"
+fi
+
+perl -pi -e "
+  ${NIRI_CONFIG_REGION}
+  ${NIRI_CONFIG_SCALE}
+  s/^window-rule { open-maximized .*; }/window-rule { open-maximized true; }/g
+" "${XDG_CONFIG_HOME}/niri/config.kdl.local"
+
+# Give niri a moment to pick up the adjusted config.
+if [ "${REGION}" == "1" ]; then
+  sleep 0.5
+fi
+
+# Scaling should happen after the niri config gets adjusted.
+if [ "${SCALE}" == "1" ]; then
+  output-scale 3.0
+fi
+
+# Launch and position OBS.
+if [ "${OBS}" == "1" ]; then
+  if ! pgrep obs >/dev/null 2>&1; then
+    niri msg action spawn -- obs
+  fi
+
+  # OBS takes a little while to start, without this the ID is empty below.
+  # I'm sure there's a better way to do this by looking at an event steam or
+  # process list in a loop but this works for now.
+  sleep 2
+
+  OBS_ID=$(niri msg --json windows |
+    jq --raw-output --exit-status '.[] | select(.app_id == "com.obsproject.Studio") | .id')
+
+  niri msg action focus-window --id "${OBS_ID}"
+  niri msg action move-window-to-monitor-right
+fi
+
+# Use 2nd monitor as a key light.
+swaybg --output "${OUTPUT_KEYLIGHT_NAME}" --color "${OUTPUT_KEYLIGHT_COLOR}" >/dev/null 2>&1 &
+
+cat <<EOF
+-> Shell history has been backed up to ${HISTFILE}.bak
+-> Temporary Neovim files have been deleted from ${NEOVIM_SWAP_PATH}
+
+Apply Ghostty font-size adjustments
+- CTRL + SHIFT + T to open a new tab (or open a new window)
+- Close your original tabs (or windows)
+
+Plan to switch between tmux sessions?
+  - 1. Leader + CTRL + s to save your sessions
+  - 2. tmux kill-server
+
+Going to use a browser?
+  - Close your current browser instances at your discretion
+  - Open one with an isolated profile
+    - Example: niri msg action spawn -- firefox -P "isolated"
+      - Mod+Ctrl+Shift+Alt+B is mapped by default to do this
+
+Various tips:
+  - Use CTRL + L instead of running clear to clear your screen as needed
+  - Make sure your windows are positioned correctly if recording a region
+  - Be mindful of secrets in any .env file!
+  - Make sure OBS is actually recording / streaming (if and when applicable)
+EOF

@@ -1,0 +1,94 @@
+{{- /*
+  /etc/sudoers.d entries and udev rules from .chezmoidata/system.yaml.
+  Entries that are in the `skip` lists are not installed. Renders to nothing
+  (and therefore doesn't run) when there's nothing left to install.
+*/ -}}
+{{- $sudoers := dict -}}
+{{- range $name, $content := (merge (dict) .sudoers.extras .sudoers.default) -}}
+{{-   if not (has $name $.sudoers.skip) -}}
+{{-     $_ := set $sudoers $name $content -}}
+{{-   end -}}
+{{- end -}}
+{{- $udev := dict -}}
+{{- range $name, $content := (merge (dict) .udev.extras .udev.default) -}}
+{{-   if not (has $name $.udev.skip) -}}
+{{-     $_ := set $udev $name $content -}}
+{{-   end -}}
+{{- end -}}
+{{- if and (eq .chezmoi.os "linux") (ne .distro "unsupported") (or $sudoers $udev) -}}
+#!/usr/bin/env bash
+{{ template "prelude" . }}
+
+{{ if $sudoers -}}
+_info "CONFIGURE SUDOERS ENTRIES"
+
+# Write /etc/sudoers.d/<name> from stdin, but only when it differs. The entry
+# gets validated first since a broken sudoers file locks you out of sudo.
+_sudoers_entry() {
+  local name="${1}"
+  local entry="/etc/sudoers.d/${name}"
+  local tmp=
+  tmp="$(mktemp)"
+
+  cat >"${tmp}"
+
+  if sudo test -f "${entry}" && sudo cmp -s "${tmp}" "${entry}"; then
+    _skipping "'${name}' didn't change"
+  elif sudo visudo --check --quiet --file "${tmp}"; then
+    sudo install -Dm440 -o root -g root "${tmp}" "${entry}"
+    echo "'${entry}' has been installed"
+  else
+    rm -f "${tmp}"
+    _error "'${name}' isn't valid sudoers syntax, refusing to install it"
+  fi
+
+  rm -f "${tmp}"
+}
+
+{{ range $name, $content := $sudoers -}}
+_sudoers_entry {{ $name | quote }} <<'__DFR_SUDOERS__'
+{{ $content | replace "__USER__" $.chezmoi.username }}
+__DFR_SUDOERS__
+
+{{ end -}}
+printf "\nConfigured in '/etc/sudoers.d/'\n"
+{{ end }}
+
+{{ if $udev -}}
+_info "CONFIGURE UDEV RULES"
+
+rules_dir="/etc/udev/rules.d"
+
+if [ ! -d "${rules_dir}" ]; then
+  _skipping "Only runs when '${rules_dir}/' exists"
+else
+  _udev_rule() {
+    local name="${1}"
+    local rule="${rules_dir}/${name}.rules"
+    local tmp=
+    tmp="$(mktemp)"
+
+    cat >"${tmp}"
+
+    if sudo test -f "${rule}" && sudo cmp -s "${tmp}" "${rule}"; then
+      _skipping "'${name}.rules' didn't change"
+    else
+      sudo install -Dm644 -o root -g root "${tmp}" "${rule}"
+      echo "'${rule}' has been installed"
+
+      # Apply the changes right now without needing to reboot.
+      sudo udevadm control --reload-rules && sudo udevadm trigger
+    fi
+
+    rm -f "${tmp}"
+  }
+
+{{ range $name, $content := $udev -}}
+  _udev_rule {{ $name | quote }} <<'__DFR_UDEV__'
+{{ $content }}
+__DFR_UDEV__
+
+{{ end -}}
+fi
+{{ end }}
+{{- end }}

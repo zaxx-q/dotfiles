@@ -1,0 +1,82 @@
+{{- /*
+  Programming languages (and on Debian, CLI tools) installed through mise. The
+  languages are defaults + extras - skip, see .chezmoidata/system.yaml.
+*/ -}}
+{{- $languages := dict -}}
+{{- range $name, $spec := (merge (dict) .mise.languages_extras .mise.languages) -}}
+{{-   if not (has $name $.mise.languages_skip) -}}
+{{-     $_ := set $languages $name $spec -}}
+{{-   end -}}
+{{- end -}}
+{{- $tools := list -}}
+{{- if ne .distro "unsupported" -}}
+{{-   $key := .distro -}}
+{{-   $skip := index .mise (printf "%s_skip" $key) -}}
+{{-   range (concat (index .mise $key) (index .mise (printf "%s_extras" $key))) -}}
+{{-     if not (has . $skip) -}}
+{{-       $tools = append $tools . -}}
+{{-     end -}}
+{{-   end -}}
+{{- end -}}
+{{- if and (ne .distro "unsupported") (or $languages $tools) -}}
+#!/usr/bin/env bash
+{{ template "prelude" . }}
+
+_info "INSTALL MISE PACKAGES AND PROGRAMMING LANGUAGES"
+
+# Mise is installed by the packages script, in ~/.local/bin on Fedora.
+export PATH="${HOME}/.local/bin:${PATH}"
+{{- if eq .distro "darwin" }}
+eval "$({{ if eq .chezmoi.arch "arm64" }}/opt/homebrew{{ else }}/usr/local{{ end }}/bin/brew shellenv)"
+{{- end }}
+
+if ! command -v mise >/dev/null 2>&1; then
+  _warning "'mise' isn't installed, skipping. Install it and run: chezmoi state delete-bucket --bucket=scriptState && chezmoi apply"
+  exit 0
+fi
+
+mise_shim_path="${XDG_DATA_HOME}/mise/shims"
+export PATH="${mise_shim_path}:${PATH}"
+
+{{ if $tools -}}
+MISE_TOOLS=(
+{{- range $tools }}
+  {{ . | quote }}
+{{- end }}
+)
+
+printf "\n%bInstalling %s:%b\n\n" "${C_BLUE}" "${MISE_TOOLS[*]}" "${C_RESET}"
+mise use --global "${MISE_TOOLS[@]}"
+{{ end }}
+
+{{- if $languages }}
+# "binary name|what gets passed to mise"
+MISE_LANGUAGES=(
+{{- range $name, $spec := $languages }}
+  {{ printf "%s|%s" $name $spec | quote }}
+{{- end }}
+)
+
+for item in "${MISE_LANGUAGES[@]}"; do
+  key="${item%%|*}"
+  spec="${item#*|}"
+
+  [ -z "${spec}" ] && continue
+
+  printf "\n%bInstalling %s:%b\n\n" "${C_BLUE}" "${spec}" "${C_RESET}"
+
+  if [ -x "${mise_shim_path}/${key}" ]; then
+    _skipping "Already installed, run 'mise upgrade ${key} --bump' to upgrade"
+  else
+    mise use --global "${spec}"
+  fi
+
+  # Also install Yarn for Node.
+  if [ "${key}" = "node" ]; then
+    if ! "${mise_shim_path}/yarn" --version >/dev/null 2>&1; then
+      "${mise_shim_path}/npm" install --unsafe-perm=true --allow-root --global yarn
+    fi
+  fi
+done
+{{- end }}
+{{ end }}

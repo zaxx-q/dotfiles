@@ -1,0 +1,8 @@
+# Defaults for the machine specific values that `chezmoi init` normally sets in
+# ~/.config/chezmoi/chezmoi.toml (see .chezmoi.toml.tmpl). They only exist so
+# that templates still render if someone runs `chezmoi apply` before `init`.
+# Anything in chezmoi.toml wins over these.
+
+# Start niri from ~/.config/zsh/.zprofile after logging in on a TTY. Leave this
+# off when a display / login manager launches the niri-uwsm session for you.
+autostart_niri: false

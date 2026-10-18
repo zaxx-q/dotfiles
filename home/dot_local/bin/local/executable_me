@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -eq 0 ]]; then
+  echo "Usage: magic-exec <prompt>" >&2
+  exit 1
+fi
+
+PROMPT="$*"
+
+SYSTEM_PROMPT="You are a shell command generator. Output ONLY raw executable Bash code fulfilling the user's request.
+CRITICAL: Do NOT wrap output in markdown code fences or blocks (NO \`\`\` or \`\`\`bash).
+Do NOT wrap the command in backticks.
+Do NOT include explanations, markdown, or commentary.
+Start immediately with the command on line 1, as the output will be executed directly by a shell."
+
+# Run a single isolated turn: use no discovered instructions, skills, or
+# extensions. Explicitly load the provider and environment-details extensions.
+set +e
+RAW="$(pi -p \
+  --no-tools \
+  --no-session \
+  --no-context-files \
+  --no-skills \
+  --no-extensions \
+  --no-prompt-templates \
+  --no-themes \
+  --extension "$HOME/.pi/agent/npm/node_modules/@router-for-me/pi-cliproxyapi-provider/extensions/index.ts" \
+  --extension "$HOME/.pi/agent/extensions/environment-details.ts" \
+  --model grok-4.6 \
+  --thinking off \
+  --system-prompt "$SYSTEM_PROMPT" \
+  -- \
+  "$PROMPT" 2>&1)"
+PI_STATUS=$?
+set -e
+
+if [[ $PI_STATUS -ne 0 ]]; then
+  echo "Error: pi failed with exit code $PI_STATUS" >&2
+  printf '%s\n' "$RAW" >&2
+  exit "$PI_STATUS"
+fi
+
+# Strip ANSI escape sequences and control characters
+CMD="$(printf '%s' "$RAW" | sed 's/\x1b\[[0-9;?]*[a-zA-Z<>]//g; s/\x1b[()][AB012]//g; s/\r//g' | tr -d '\000-\010\013-\037\177')"
+
+# Strip markdown code fences if the model still wrapped the output
+CMD="$(printf '%s\n' "$CMD" | awk '
+  !NF && !started { next }
+  { started = 1; lines[++n] = $0 }
+  END {
+    while (n > 0 && lines[n] ~ /^[[:space:]]*$/) n--
+    start = 1
+    if (n >= 1 && lines[1] ~ /^[[:space:]]*```/) start = 2
+    end = n
+    if (end >= start && lines[end] ~ /^[[:space:]]*```[[:space:]]*$/) end = end - 1
+    for (i = start; i <= end; i++) print lines[i]
+  }
+')"
+
+# Strip single backtick wrapping if the entire command was wrapped in `...`
+if [[ "$CMD" =~ ^\`[^\`]+\`$ ]]; then
+  CMD="${CMD#\`}"
+  CMD="${CMD%\`}"
+fi
+
+# Trim any remaining leading/trailing whitespace
+CMD="$(printf '%s' "$CMD" | sed -e '1s/^[[:space:]]*//' -e '$s/[[:space:]]*$//')"
+
+if [[ -z "$CMD" ]]; then
+  echo "Error: pi returned an empty command." >&2
+  exit 1
+fi
+
+echo ""
+echo "Generated command/script:"
+printf '%s\n' "$CMD"
+echo ""
+
+while true; do
+  read -r -p "Run it? [y]es, [i]nline edit, [e]dit, or [N]o: " CONFIRM
+  case "$CONFIRM" in
+  [yY] | [yY][eE][sS])
+    echo ""
+    bash -c "$CMD"
+    break
+    ;;
+  [iI] | [iI][nN][lL][iI][nN][eE])
+    if [[ "$CMD" == *$'\n'* ]]; then
+      echo "Inline editing supports one-line commands only; use [e]dit for scripts."
+      continue
+    fi
+
+    if read -r -e -i "$CMD" -p "Edit command: " EDITED_CMD; then
+      if [[ -n "$EDITED_CMD" ]]; then
+        CMD="$EDITED_CMD"
+        echo ""
+        echo "Edited command:"
+        printf '%s\n' "$CMD"
+        echo ""
+      else
+        echo "Error: edited command is empty." >&2
+      fi
+    else
+      echo ""
+    fi
+    ;;
+  [eE] | [eE][dD][iI][tT])
+    TMPFILE="$(mktemp "${TMPDIR:-/tmp}/me.XXXXXX")"
+    trap 'rm -f "$TMPFILE"' EXIT
+    printf '%s\n' "$CMD" >"$TMPFILE"
+    # $VISUAL and $EDITOR may include arguments (for example, "zed --wait").
+    # Split the configured command so its executable and arguments are separate.
+    read -r -a EDITOR_CMD <<<"${VISUAL:-${EDITOR:-nano}}"
+    "${EDITOR_CMD[@]}" "$TMPFILE"
+    CMD="$(<"$TMPFILE")"
+    rm -f "$TMPFILE"
+    trap - EXIT
+
+    if [[ -z "$CMD" ]]; then
+      echo "Error: edited command/script is empty." >&2
+      exit 1
+    fi
+
+    echo ""
+    echo "Edited command/script:"
+    printf '%s\n' "$CMD"
+    echo ""
+    ;;
+  *)
+    echo "Aborted."
+    exit 1
+    ;;
+  esac
+done

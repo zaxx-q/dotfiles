@@ -1,0 +1,18 @@
+{{- if ne .distro "unsupported" -}}
+#!/usr/bin/env bash
+# Install antidote and the zsh plugins from ~/.config/zsh/.zsh_plugins.txt.
+# Runs again when the plugin list changes, update them any time with:
+#   dfr-update-zsh-plugins
+#
+# plugins: {{ include "dot_config/zsh/dot_zsh_plugins.txt" | sha256sum }}
+{{ template "prelude" . }}
+
+_info "INSTALL ZSH PLUGINS"
+
+# Plugin downloads are optional, do not leave an otherwise successful apply
+# half finished because a third party plugin update failed. The helper prints
+# its specific failure before this warning.
+if ! "${HOME}/.local/bin/dfr-update-zsh-plugins"; then
+  _warning "Zsh plugins could not be installed or updated. Run 'dfr-update-zsh-plugins' after resolving the issue."
+fi
+{{- end }}

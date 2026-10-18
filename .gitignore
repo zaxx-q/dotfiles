@@ -1,0 +1,39 @@
+# Swap
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Session
+Session.vim
+
+# Temporary
+.netrwhist
+*~
+
+# Auto-generated tag files
+tags
+
+# Persistent undo
+[._]*.un~/
+
+*.spl
+
+# Safety net. Runtime state and secrets must never end up in the chezmoi source,
+# they stay on the machine they belong to (see "What's not in the repo"). The
+# real protection is the last section of home/.chezmoiignore, this catches
+# whatever gets copied in by hand. chezmoi names private files private_*, hence
+# the leading wildcards.
+**/*dot_env
+**/*auth.json
+**/*cliproxyapi*
+**/*_history*
+**/*zsh_history*
+**/dot_zsh_plugins.zsh
+**/dot_pi/agent/**/sessions/
+**/dot_pi/agent/**/npm/
+**/dot_pi/agent/fff/
+**/dot_pi/agent/**/models*.json
+**/dot_pi/agent/**/pim-models.json
+**/dot_pi/agent/crashes.json

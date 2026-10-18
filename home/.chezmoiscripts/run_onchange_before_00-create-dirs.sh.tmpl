@@ -1,0 +1,74 @@
+{{- if ne .distro "unsupported" -}}
+#!/usr/bin/env bash
+# Directories that programs expect to exist before their configs are deployed.
+# Was `create_initial_dirs` in the old dotfriedrice script.
+{{ template "prelude" . }}
+
+{{ template "effective-packages" . }}
+
+{{ range $key, $value := .xdg.user_dirs -}}
+XDG_{{ $key }}_DIR="${HOME}/{{ $value }}"
+{{ end }}
+
+_info "CREATE INITIAL DIRECTORIES"
+
+mkdir -p \
+  "${HOME}/.local/bin" \
+  "${XDG_CACHE_HOME}/zsh" \
+  "${XDG_CONFIG_HOME}/bat" \
+  "${XDG_CONFIG_HOME}/btop/themes" \
+  "${XDG_CONFIG_HOME}/fastfetch" \
+  "${XDG_CONFIG_HOME}/fzf" \
+  "${XDG_CONFIG_HOME}/ghostty" \
+  "${XDG_CONFIG_HOME}/git" \
+  "${XDG_CONFIG_HOME}/gnupg" \
+  "${XDG_CONFIG_HOME}/tmux/plugins" \
+  "${XDG_CONFIG_HOME}/zsh" \
+  "${XDG_DATA_HOME}/fonts" \
+  "${XDG_STATE_HOME}/dotfriedrice"
+
+# GnuPG refuses to use a home directory that others can read.
+chmod 700 "${XDG_CONFIG_HOME}/gnupg"
+
+if [ "${GUI_ENABLED}" == "1" ]; then
+  # Create a directory only if the associated package is not skipped.
+  _mkdir_if_pkg() {
+    local pkg="${1}"
+    shift
+
+    if _has_package "${pkg}"; then
+      mkdir -p "${@}"
+    fi
+  }
+
+  # Directories that are always needed when the GUI is enabled.
+  mkdir -p \
+    "${XDG_CONFIG_HOME}/fontconfig" \
+    "${XDG_CONFIG_HOME}/gtk-3.0" \
+    "${XDG_CONFIG_HOME}/gtk-4.0" \
+    "${XDG_DATA_HOME}/applications" \
+    "${XDG_DATA_HOME}/thumbnailers" \
+    "${XDG_DESKTOP_DIR}" \
+    "${XDG_DOCUMENTS_DIR}" \
+    "${XDG_DOWNLOAD_DIR}" \
+    "${XDG_MUSIC_DIR}/playlists" \
+    "${XDG_PICTURES_DIR}" \
+    "${XDG_PUBLICSHARE_DIR}" \
+    "${XDG_TEMPLATES_DIR}" \
+    "${XDG_VIDEOS_DIR}"
+
+  # Directories tied to a specific package.
+  _mkdir_if_pkg "mako" "${XDG_CONFIG_HOME}/mako"
+  _mkdir_if_pkg "mpd" "${XDG_CACHE_HOME}/mpd" "${XDG_CONFIG_HOME}/mpd"
+  _mkdir_if_pkg "niri" "${XDG_CONFIG_HOME}/niri"
+  _mkdir_if_pkg "rmpc" "${XDG_CONFIG_HOME}/rmpc"
+  _mkdir_if_pkg "satty" "${XDG_CONFIG_HOME}/satty"
+  _mkdir_if_pkg "swayidle" "${XDG_CONFIG_HOME}/swayidle"
+  _mkdir_if_pkg "swaylock" "${XDG_CONFIG_HOME}/swaylock"
+  _mkdir_if_pkg "tumbler" "${XDG_CONFIG_HOME}/tumbler"
+  _mkdir_if_pkg "uwsm" "${XDG_CONFIG_HOME}/uwsm"
+  _mkdir_if_pkg "waybar" "${XDG_CONFIG_HOME}/waybar"
+  _mkdir_if_pkg "xarchiver" "${XDG_CONFIG_HOME}/xarchiver"
+  _mkdir_if_pkg "zathura" "${XDG_CONFIG_HOME}/zathura"
+fi
+{{- end }}

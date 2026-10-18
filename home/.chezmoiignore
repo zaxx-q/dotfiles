@@ -1,0 +1,72 @@
+{{- /*
+  Paths are relative to $HOME. This file is itself a template.
+
+  Three kinds of rules live here:
+    1. Targets this machine opted out of (`skip.targets` in .chezmoidata/system.yaml)
+    2. Desktop only files (gui = false -> not deployed), this mirrors
+       CONFIG_INSTALL_GUI_LINUX from the old dotfriedrice setup
+    3. Runtime files and secrets that must never get into the repo
+*/ -}}
+
+{{- /* 1. Opted out */ -}}
+{{ range .skip.targets }}
+{{ . }}
+{{ end }}
+
+{{- /* 2. Desktop environment */ -}}
+{{ if not .gui }}
+.config/mako
+.config/mimeapps.list
+.config/mpd
+.config/mpv
+.config/niri
+.config/rmpc
+.config/satty
+.config/swayidle
+.config/tumbler
+.config/user-dirs.conf
+.config/user-dirs.dirs
+.config/uwsm
+.config/waybar
+.config/xarchiver
+.config/zathura
+.local/share/applications
+.local/share/thumbnailers
+.local/bin/dfr-first-boot
+.local/bin/dfr-launch-or-focus
+.local/bin/dfr-launch-or-focus-tui
+.local/bin/dfr-toggle-notifications
+.local/bin/kdenlive
+.local/bin/mkclip
+.local/bin/output-scale
+.local/bin/output-toggle-mouse-lock
+.local/bin/rec-start
+.local/bin/rec-stop
+.local/bin/resolve-convert
+.local/bin/virt-manager
+{{ end }}
+
+{{- /* 3. Runtime files and secrets. They live next to managed config but are
+       never part of it. Listing them here keeps `chezmoi add ~/.pi/agent` (or
+       ~/.config) from copying them into the repo. Replaces the .gitignore
+       files the old repo had in .pi/agent and .config/zed. */ -}}
+.pi/agent/**/.env
+.pi/agent/**/sessions
+.pi/agent/**/npm
+.pi/agent/**/models*.json
+.pi/agent/**/pim-models.json
+.pi/agent/**/auth.json
+.pi/agent/**/*cliproxyapi*
+.pi/agent/crashes.json
+.pi/agent/mcp-auth.json
+.pi/agent/fff
+.pi/agent/settings/pi-dynamic-models.json
+.pi/agent/extensions/pi-permission-system/logs
+.pi/agent/themes/noctalia.json
+.pi/agent/pi-debug.log
+.config/zed/themes/noctalia.json
+.config/zed/themes/dank-zed-theme.json
+.config/nvim/lua/plugins/theme.lua
+.config/zsh/.zsh_history*
+.config/zsh/.zsh_plugins.zsh
+.config/zsh/.aliases.local

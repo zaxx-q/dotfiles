@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+# Helper script to manage the project itself.
+
+set -o errexit
+set -o pipefail
+
+lint() {
+  # Lint all supported file types
+  local shellcheck_cmd=(shellcheck)
+  local ruff_cmd=(ruff)
+
+  if ! command -v shellcheck >/dev/null 2>&1; then
+    local shellcheck_cmd=(docker container run --rm -i -v "${PWD}:/mnt" koalaman/shellcheck:stable)
+  fi
+
+  if ! command -v ruff >/dev/null 2>&1; then
+    local ruff_cmd=(docker container run --rm -i -v "${PWD}:/io" -u "$(id -u):$(id -g)" ghcr.io/astral-sh/ruff:0.15.11)
+  fi
+
+  find . -type f \
+    ! -path "./.git/*" \
+    ! -path "./.github/*" \
+    ! -path "./.ruff_cache/*" \
+    ! -path "./_docs/*" \
+    ! -path "./home/.system/wsl/*" \
+    ! -name "*.tmpl" \
+    -exec sh -c 'head -n 1 "${1}" | grep --quiet -E "^(#!.*sh|# shellcheck shell=)"' _ {} \; \
+    -exec "${shellcheck_cmd[@]}" {} +
+
+  "${ruff_cmd[@]}" check "${@}"
+}
+
+format() {
+  # Format all supported file types
+  local shfmt_cmd=(shfmt)
+  local ruff_cmd=(ruff)
+
+  if ! command -v shfmt >/dev/null 2>&1; then
+    local shfmt_cmd=(docker container run --rm -i -v "${PWD}:/mnt" -u "$(id -u):$(id -g)" -w /mnt mvdan/shfmt:v3)
+  fi
+
+  if ! command -v ruff >/dev/null 2>&1; then
+    local ruff_cmd=(docker container run --rm -i -v "${PWD}:/io" -u "$(id -u):$(id -g)" ghcr.io/astral-sh/ruff:0.15.11)
+  fi
+
+  local shfmt_args=("--write")
+
+  for arg in "${@}"; do
+    [ "${arg}" == "--check" ] && shfmt_args+=("--diff")
+
+    if [ "${arg}" == "-d" ] || [ "${arg}" == "--diff" ] || [ "${shfmt_args[1]}" == "--diff" ]; then
+      unset "shfmt_args[0]"
+    fi
+  done
+
+  "${shfmt_cmd[@]}" "${shfmt_args[@]}" . home/dot_config/zsh/dot_aliases
+  # shfmt only guesses zsh from a file named .zshrc, not chezmoi's dot_zshrc.
+  "${shfmt_cmd[@]}" "${shfmt_args[@]}" -ln=zsh home/dot_config/zsh/dot_zshrc
+
+  "${ruff_cmd[@]}" check --fix
+  "${ruff_cmd[@]}" format "${@}"
+}
+
+chezmoi:check() {
+  # Templates can't be linted as they are, so `lint` skips them. This renders
+  # every shell script template (the chezmoi run scripts and the other templates
+  # that start with a shebang or a shellcheck directive) for several machine
+  # profiles, then checks them with bash -n and, when it's installed, with the
+  # linter. Needs chezmoi.
+  local repo="${PWD}"
+  local tmp=
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "${tmp}"' RETURN
+
+  if ! command -v chezmoi >/dev/null 2>&1; then
+    echo "chezmoi isn't installed, skipping" >&2
+    return 0
+  fi
+
+  local shellcheck_cmd=(shellcheck)
+  command -v shellcheck >/dev/null 2>&1 || shellcheck_cmd=(true)
+
+  # name distro gui wsl container
+  local profiles=(
+    "fedora-gui fedora true false false"
+    "fedora-cli fedora false false false"
+    "arch-gui arch true false false"
+    "arch-cli arch false false false"
+    "debian-cli debian false false false"
+    "debian-wsl debian false true false"
+    "darwin darwin false false false"
+  )
+
+  local profile name distro gui wsl container script rendered failed=0
+
+  for profile in "${profiles[@]}"; do
+    read -r name distro gui wsl container <<<"${profile}"
+
+    printf '[data]\n  name = "Test User"\n  email = "test@example.com"\n  signingkey = ""\n' >"${tmp}/${name}.toml"
+    printf '  distro = "%s"\n  wsl = %s\n  container = %s\n  gui = %s\n' \
+      "${distro}" "${wsl}" "${container}" "${gui}" >>"${tmp}/${name}.toml"
+
+    while IFS= read -r -d '' script; do
+      rendered="${tmp}/${name}-${script//\//_}"
+
+      chezmoi --source "${repo}" --config "${tmp}/${name}.toml" execute-template <"${script}" >"${rendered}"
+
+      # Scripts that render to nothing are skipped by chezmoi, that's fine.
+      grep -q '[^[:space:]]' "${rendered}" || continue
+
+      # Anything outside of .chezmoiscripts only counts if it's a shell script.
+      if [[ "${script}" != home/.chezmoiscripts/* ]]; then
+        head -n 1 "${rendered}" | grep -q -E '^(#!.*sh|# shellcheck shell=)' || continue
+      fi
+
+      bash -n "${rendered}" || failed=1
+      "${shellcheck_cmd[@]}" --shell=bash "${rendered}" || failed=1
+    done < <(find home -type f -name '*.tmpl' ! -path 'home/.chezmoitemplates/*' ! -path 'home/.system/*' ! -name '.chezmoi*' -print0)
+  done
+
+  [ "${failed}" == "0" ] || return 1
+  echo "All scripts render and pass for ${#profiles[@]} profiles"
+}
+
+quality() {
+  # Perform all code quality commands together
+  lint "${@}"
+  format "${@}"
+}
+
+ci:test() {
+  # Execute Continuous Integration (CI) pipeline
+  lint
+  format --check --diff
+  chezmoi:check
+}
+
+help() {
+  printf "%s <task> [args]\n\nTasks:\n" "${0}"
+
+  compgen -A function | grep -v "^_" | cat -n
+
+  printf "\nExtended help:\n  Each task has comments for general usage\n"
+}
+
+TIMEFORMAT=$'\nTask completed in %3lR'
+time "${@:-help}"

@@ -1,0 +1,16 @@
+# shellcheck shell=bash
+
+# Managed by chezmoi. The user directories come from `xdg.user_dirs` in
+# .chezmoidata/system.yaml, change them there.
+
+# XDG base directories.
+export XDG_CACHE_HOME="{{ .chezmoi.homeDir }}/.cache"
+export XDG_CONFIG_HOME="{{ .chezmoi.homeDir }}/.config"
+export XDG_DATA_HOME="{{ .chezmoi.homeDir }}/.local/share"
+export XDG_STATE_HOME="{{ .chezmoi.homeDir }}/.local/state"
+{{ if .gui }}
+# XDG user directories.
+{{ range $key, $dir := .xdg.user_dirs -}}
+export XDG_{{ $key }}_DIR="{{ $.chezmoi.homeDir }}/{{ $dir }}"
+{{ end -}}
+{{ end -}}

@@ -1,0 +1,387 @@
+# System packages, one block per supported distro.
+#
+# This replaces `_install/default/packages/*` and the PACKAGES_* variables of the
+# old `dotfriedrice-config`. The semantics are the same as before:
+#
+#   <list>         the default packages
+#   <list>_extras  packages added on top of the defaults
+#   <list>_skip    packages removed from the defaults
+#
+# The effective list is (<list> + <list>_extras) - <list>_skip. To change it for
+# a single machine, override the key in the `[data]` table of
+# ~/.config/chezmoi/chezmoi.toml (lists are replaced, not merged).
+#
+# Only the block that matches the machine's distro is used. GUI lists are only
+# used when `gui` is true.
+
+packages:
+  # Ask for confirmation (false) or pass -y / --noconfirm (true) to the package manager.
+  auto_confirm: false
+
+  fedora:
+    cli:
+      - aspell
+      - aspell-en
+      - bat
+      - bc
+      - bind-utils
+      - btop
+      - curl
+      - diffutils
+      - dust
+      - eza
+      - fastfetch
+      - fd-find
+      - ffmpeg
+      - fontconfig
+      - fzf
+      - git
+      - git-delta
+      - gnupg2
+      - ImageMagick
+      - inotify-tools
+      - jq
+      - less
+      - libqalculate
+      - man-db
+      - man-pages
+      - nmap-ncat
+      - openssh
+      - pwgen
+      - ripgrep
+      - rsync
+      - ShellCheck
+      - shfmt
+      - smartmontools
+      - strace
+      - tmux
+      - unzip
+      - usbutils
+      - wev
+      - wget
+      - whois
+      - wl-clipboard
+      - xz
+      - yq
+      - zip
+      - zoxide
+      - zsh
+    cli_extras:
+      # - hd-idle
+      - keyd
+      # - kdeconnectd
+      - trans
+      - earlyoom
+    cli_skip:
+      - aspell
+      - aspell-en
+    gui:
+      - brightnessctl
+      - dnsmasq
+      - docker
+      - docker-buildx
+      - docker-compose
+      - ffmpegthumbnailer
+      - libqalculate
+      - qalculate
+      - firefox
+      - ghostty
+      - gimp
+      - grim
+      - hyprpicker
+      - iptables-nft
+      - kdenlive
+      - keepassxc
+      - lact
+      - libreoffice
+      - mako
+      - mpd
+      - mpv
+      - google-noto-color-emoji-fonts
+      - niri
+      - obs-studio
+      - pipewire
+      - pipewire-alsa
+      - pipewire-jack-audio-connection-kit
+      - pipewire-pulse
+      - "@virtualization"
+      - qt6-qtmultimedia
+      - rmpc
+      - satty
+      - slurp
+      - swaybg
+      - swayidle
+      - swaylock
+      - tesseract
+      - tesseract-langpack-eng
+      - thunar
+      - thunar-archive-plugin
+      - timidity++
+      - gnu-free-fonts-common
+      - gnu-free-mono-fonts
+      - gnu-free-sans-fonts
+      - gnu-free-serif-fonts
+      - tumbler
+      - uwsm
+      - waybar
+      - wiremix
+      - wireplumber
+      - wlrctl
+      - xarchiver
+      - xdg-desktop-portal-gnome
+      - xdg-desktop-portal-gtk
+      - xdg-utils
+      - xwayland-satellite
+      - zathura
+      - zathura-djvu
+      - zathura-pdf-mupdf
+    gui_extras: []
+    # The desktop suite (noctalia) already provides: brightnessctl, grim, mako,
+    # slurp, swaybg, swayidle, swaylock, waybar
+    gui_skip:
+      - brightnessctl
+      - docker
+      - docker-buildx
+      - docker-compose
+      - firefox
+      - grim
+      - kdenlive
+      - keepassxc
+      - libreoffice
+      - mako
+      - qt6-qtmultimedia
+      - slurp
+      - swaybg
+      - swayidle
+      - swaylock
+      - tesseract
+      - tesseract-langpack-eng
+      - timidity++
+      - waybar
+      - zathura-djvu
+      - satty
+    # Install Fedora weak dependencies?
+    weak_deps: true
+    # Weak dependencies to exclude (only used when weak_deps is true).
+    weak_deps_skip:
+      - alacritty
+      - fuzzel
+      - mako
+      - swaybg
+      - swayidle
+      - swaylock
+      - waybar
+      - obs-studio-plugin-vlc-video
+      - wofi
+    # COPR repositories enabled in GUI mode, format "owner/project".
+    coprs:
+      - yalter/niri-git
+      - scottames/ghostty
+      - lionheartp/Hyprland
+    coprs_extras: []
+    coprs_skip: []
+
+  arch:
+    cli:
+      - aspell
+      - base
+      - base-devel
+      - bat
+      - bc
+      - btop
+      - curl
+      - dnsutils
+      - dust
+      - eza
+      - fastfetch
+      - fd
+      - ffmpeg
+      - fontconfig
+      - fzf
+      - git
+      - git-delta
+      - gnupg
+      - go-yq
+      - imagemagick
+      - inotify-tools
+      - jq
+      - less
+      - libqalculate
+      - man-db
+      - man-pages
+      - mise
+      - openbsd-netcat
+      - openssh
+      - pacman-contrib
+      - pwgen
+      - ripgrep
+      - rsync
+      - shellcheck
+      - shfmt
+      - smartmontools
+      - strace
+      - tmux
+      - unzip
+      - usbutils
+      - wev
+      - wget
+      - whois
+      - wl-clipboard
+      - zip
+      - zoxide
+      - zsh
+    cli_extras: []
+    cli_skip: []
+    gui:
+      - brightnessctl
+      - chromium
+      - dnsmasq
+      - docker
+      - docker-buildx
+      - docker-compose
+      - ffmpegthumbnailer
+      - firefox
+      - ghostty
+      - gimp
+      - grim
+      - hyprpicker
+      - iptables
+      - kdenlive
+      - keepassxc
+      - lact
+      - libqalculate
+      - libreoffice-fresh
+      - libvirt
+      - mako
+      - mpd
+      - mpd-mpris
+      - mpv
+      - niri
+      - noto-fonts-emoji
+      - obs-studio
+      - pipewire
+      - pipewire-alsa
+      - pipewire-jack
+      - pipewire-pulse
+      - qemu-desktop
+      - qt6-multimedia-ffmpeg
+      - rmpc
+      - satty
+      - slurp
+      - swaybg
+      - swayidle
+      - swaylock
+      - tesseract-data-eng
+      - thunar
+      - thunar-archive-plugin
+      - timidity++
+      - ttf-freefont
+      - tumbler
+      - uwsm
+      - virt-manager
+      - waybar
+      - wiremix
+      - wireplumber
+      - xarchiver
+      - xdg-desktop-portal-gnome
+      - xdg-desktop-portal-gtk
+      - xdg-utils
+      - xwayland-satellite
+      - zathura
+      - zathura-djvu
+      - zathura-pdf-mupdf
+    gui_extras: []
+    gui_skip: []
+    aur: []
+    aur_extras: []
+    aur_skip: []
+    aur_gui:
+      - wlrctl
+    aur_gui_extras: []
+    aur_gui_skip: []
+
+  debian:
+    cli:
+      - aspell
+      - bc
+      - build-essential
+      - curl
+      - dnsutils
+      - du-dust
+      - ffmpeg
+      - fontconfig
+      - git
+      - git-delta
+      - gnupg
+      - imagemagick
+      - inotify-tools
+      - iproute2
+      - keepassxc
+      - netcat-openbsd
+      - openssh-server
+      - pwgen
+      - qalc
+      - rsync
+      - smartmontools
+      - strace
+      - unzip
+      - usbutils
+      - wev
+      - wget
+      - whois
+      - wl-clipboard
+      - xz-utils
+      - zip
+      - zoxide
+      - zsh
+    cli_extras: []
+    cli_skip: []
+
+  darwin:
+    brew:
+      - aspell
+      - bash
+      - bat
+      - bc
+      - btop
+      - curl
+      - diffutils
+      - dust
+      - eza
+      - fastfetch
+      - fd
+      - ffmpeg
+      - fzf
+      - git
+      - git-delta
+      - gnupg
+      - imagemagick
+      - jq
+      - libqalculate
+      - mise
+      - nvtop
+      - pwgen
+      - ripgrep
+      - rsync
+      - shellcheck
+      - shfmt
+      - smartmontools
+      - tmux
+      - usbutils
+      - wget
+      - xz
+      - yq
+      - zoxide
+      - zsh
+    brew_extras: []
+    brew_skip: []
+    cask:
+      - firefox
+      - ghostty
+      - gimp
+      - google-chrome
+      - keepassxc
+      - key-codes
+      - maccy
+    cask_extras: []
+    cask_skip: []

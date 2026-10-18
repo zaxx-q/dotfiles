@@ -1,0 +1,26 @@
+{{- if and (ne .distro "unsupported") .email -}}
+#!/usr/bin/env bash
+# Create an SSH key if you don't have one yet. It's created without a
+# passphrase, same as the old dotfriedrice script. Remove the key (or add a
+# passphrase with `ssh-keygen -p`) if that's not what you want.
+#
+# email: {{ .email }}
+{{ template "prelude" . }}
+
+_info "CREATING SSH KEY"
+
+key_path="${HOME}/.ssh/id_ed25519"
+
+mkdir -p "${HOME}/.ssh"
+chmod 700 "${HOME}/.ssh"
+
+if [[ -f "${key_path}" ]]; then
+  _skipping "'${key_path}' already exists"
+else
+  ssh-keygen -t ed25519 -C {{ template "shquote" .email }} -N "" -f "${key_path}"
+fi
+
+_info "SHOWING PUBLIC SSH KEY"
+
+cat "${key_path}.pub"
+{{- end }}

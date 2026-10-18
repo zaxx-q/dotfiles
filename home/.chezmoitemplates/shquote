@@ -1,0 +1,2 @@
+{{- /* Prints its argument as a safe single quoted shell word. */ -}}
+{{- printf "'%s'" (. | replace "'" "'\\''") -}}

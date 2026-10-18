@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# Toggle Niri's touchpad setting without modifying the managed main config.
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+state_dir="${XDG_CONFIG_HOME:-${HOME}/.config}/niri"
+state_file="${state_dir}/touchpad-disabled.kdl"
+
+usage() {
+  printf 'Usage: %s {on|off|toggle}\n' "${0##*/}" >&2
+  exit 2
+}
+
+[[ $# -eq 1 ]] || usage
+
+case "$1" in
+on)
+  disabled=false
+  ;;
+off)
+  disabled=true
+  ;;
+toggle)
+  [[ -e "${state_file}" ]] && disabled=false || disabled=true
+  ;;
+*)
+  usage
+  ;;
+esac
+
+mkdir -p "${state_dir}"
+
+if "${disabled}"; then
+  temporary="$(mktemp "${state_dir}/.touchpad-disabled.kdl.XXXXXX")"
+  trap 'rm -f "${temporary}"' EXIT
+  cat >"${temporary}" <<'EOF'
+// Managed by toggle-niri-touchpad. Do not edit.
+input {
+    touchpad {
+        off
+    }
+}
+EOF
+  mv "${temporary}" "${state_file}"
+  trap - EXIT
+  status="disabled"
+else
+  rm -f "${state_file}"
+  status="enabled"
+fi
+
+if ! niri msg action load-config-file; then
+  printf 'Niri rejected the touchpad configuration; reload it after resolving the error.\n' >&2
+  exit 1
+fi
+
+notify-send "Touchpad ${status}" 2>/dev/null || true
+printf 'Touchpad %s.\n' "${status}"

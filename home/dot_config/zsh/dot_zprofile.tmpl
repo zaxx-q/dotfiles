@@ -1,0 +1,28 @@
+# shellcheck shell=bash
+# shellcheck disable=SC1091
+
+# This file runs once at login if something triggers it (like niri-session or in TTY)
+. "${HOME}/.config/zsh/env.sh"
+
+# Load local settings if they exist.
+if [ -f "${HOME}/.config/zsh/.zprofile.local" ]; then . "${HOME}/.config/zsh/.zprofile.local"; fi
+{{ if eq .distro "darwin" }}
+# Homebrew.
+export HOMEBREW_NO_ANALYTICS="1"
+eval "$({{ if eq .chezmoi.arch "arm64" }}/opt/homebrew{{ else }}/usr/local{{ end }}/bin/brew shellenv)"
+{{ end -}}
+{{ if .autostart_niri }}
+# Start niri after logging in.
+if uwsm check may-start; then exec uwsm start -- niri.desktop; fi
+{{ end -}}
+{{ if .wsl }}
+# Ensure Docker is running on WSL 2. This expects you've installed Docker and
+# Docker Compose directly within your WSL distro instead of Docker Desktop, such as:
+#   - https://nickjanetakis.com/blog/install-docker-in-wsl-2-without-docker-desktop
+if command -v docker >/dev/null 2>&1 && [ ! -d "${HOME}/.docker/desktop" ] && [ ! -d /run/systemd/system ]; then
+  if service docker status 2>&1 | grep -q "is not running"; then
+    wsl.exe --distribution "${WSL_DISTRO_NAME}" --user root \
+      --exec /usr/sbin/service docker start >/dev/null 2>&1
+  fi
+fi
+{{ end -}}

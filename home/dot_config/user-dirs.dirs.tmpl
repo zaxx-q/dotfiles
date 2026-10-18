@@ -1,0 +1,5 @@
+# Managed by chezmoi, change the values in .chezmoidata/system.yaml (xdg.user_dirs).
+
+{{ range $key, $dir := .xdg.user_dirs -}}
+XDG_{{ $key }}_DIR="{{ $.chezmoi.homeDir }}/{{ $dir }}"
+{{ end -}}

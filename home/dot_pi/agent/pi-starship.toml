@@ -1,0 +1,13 @@
+# Pi Starship footer: omit the clock and show context usage as tokens.
+format = "$brand$model$thinking$directory$git_branch$git_status$activity$context$extension_status"
+
+[context]
+format = "[$symbol ctx $tokens/$window ]($style)"
+
+[[context.display]]
+threshold = 0
+style = "bold green"
+hidden = false
+
+[time]
+disabled = true

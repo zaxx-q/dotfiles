@@ -1,0 +1,6 @@
+export FZF_DEFAULT_COMMAND="rg --files --follow --hidden --glob '!.git'"
+export FZF_DEFAULT_OPTS="--ansi --info=inline-right --layout=reverse --border=none --bind shift-up:preview-page-up,shift-down:preview-page-down"
+export FZF_CTRL_T_OPTS="--height=100% --preview='bat --color=always {}'"
+
+# shellcheck disable=SC1091
+[ -f "${XDG_CONFIG_HOME}/fzf/themes/noctalia.sh" ] && . "${XDG_CONFIG_HOME}/fzf/themes/noctalia.sh"

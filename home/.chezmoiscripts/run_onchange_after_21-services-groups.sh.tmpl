@@ -1,0 +1,102 @@
+{{- /*
+  Systemd services and group membership. GUI Linux only, like before. The
+  services list is defaults + extras - skip (matched on the unit name, the
+  first word of an entry), Wi-Fi and Bluetooth units get added by detection.
+*/ -}}
+{{- $skip := .services.skip -}}
+{{- if and .gui (eq .chezmoi.os "linux") (ne .distro "unsupported") -}}
+#!/usr/bin/env bash
+{{ template "prelude" . }}
+
+{{ template "effective-packages" . }}
+
+_info "CONFIGURE SYSTEMD SERVICES"
+
+SERVICES=(
+{{- range (concat .services.default .services.extras) }}
+{{-   $name := index (splitList " " .) 0 }}
+{{-   if not (has $name $skip) }}
+  {{ . | quote }}
+{{-   end }}
+{{- end }}
+)
+SERVICES_SKIP=({{ range $skip }}{{ . | quote }} {{ end }})
+
+_service_skipped() {
+  local skipped
+  for skipped in "${SERVICES_SKIP[@]}"; do
+    [[ "${skipped}" == "${1}" ]] && return 0
+  done
+  return 1
+}
+
+# Hardware dependent units, the packages for these come from the install
+# packages script.
+if compgen -G "/sys/class/net/*/wireless" 1>/dev/null && ! _service_skipped "iwd.service"; then
+  SERVICES+=("iwd.service")
+fi
+
+if [ -d "/sys/class/bluetooth" ] && ! _service_skipped "bluetooth.service"; then
+  SERVICES+=("bluetooth.service")
+fi
+
+_docker_desktop_installed() {
+  case "${DISTRO}" in
+  arch) pacman -Qeq "docker-desktop" >/dev/null 2>&1 ;;
+  fedora) rpm -q docker-desktop >/dev/null 2>&1 ;;
+  *) return 1 ;;
+  esac
+}
+
+if ((${#SERVICES[@]} == 0)); then
+  _skipping "No services defined"
+else
+  for item in "${SERVICES[@]}"; do
+    # Segment out the service name and all of the flags.
+    # shellcheck disable=SC2086
+    set -- ${item}
+    service="${1}"
+    shift
+    flags=("${@}")
+
+    # Ensure Docker isn't started if Docker Desktop is installed.
+    if [[ "${service}" == "docker.service" ]] && _docker_desktop_installed; then
+      if sudo systemctl --quiet is-enabled "${service}"; then
+        sudo systemctl disable --now docker.service docker.socket containerd.service 1>/dev/null
+        echo "'${service}' has been disabled since Docker Desktop is installed"
+      else
+        _skipping "'${service}' already disabled since Docker Desktop is installed"
+      fi
+
+      continue
+    fi
+
+    prefix=()
+    [[ " ${flags[*]} " == *" --user"* ]] || prefix=(sudo)
+
+    if systemctl cat "${flags[@]}" "${service}" >/dev/null 2>&1; then
+      if "${prefix[@]}" systemctl "${flags[@]}" --quiet is-enabled "${service}"; then
+        _skipping "'${service}' already enabled"
+      else
+        "${prefix[@]}" systemctl "${flags[@]}" enable "${service}" 1>/dev/null
+        echo "'${service}' has been enabled"
+      fi
+    else
+      _skipping "'${service}' is not installed"
+    fi
+  done
+fi
+
+_info "CONFIGURE GROUPS"
+
+for group in docker libvirt; do
+  if ! _has_package "${group}"; then
+    _skipping "'${group}' isn't one of the packages, not adding '${USER}' to it"
+  elif id --name --groups "${USER}" | grep --quiet --word-regexp "${group}"; then
+    _skipping "'${group}' already associated with '${USER}' user"
+  else
+    sudo usermod -aG "${group}" "${USER}"
+    echo "'${group}' has been associated with '${USER}' user"
+  fi
+done
+{{- end }}

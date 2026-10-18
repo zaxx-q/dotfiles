@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Reload or restart apps not managed by systemd. Any of the case statement
+# options can be passed in as a value.
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+APP="${1}"
+
+case "${APP}" in
+waybar)
+  killall -SIGUSR2 waybar || waybar &
+  ;;
+mako)
+  makoctl reload
+  ;;
+swaybg)
+  killall swaybg
+  ;;
+swayidle)
+  killall swayidle
+  swayidle -w &
+  ;;
+mpd)
+  killall mpd
+  mpd
+  mpd-mpris &
+  ;;
+ghostty)
+  killall -SIGUSR2 ghostty
+  ;;
+tmux)
+  tmux source-file "${XDG_CONFIG_HOME}/tmux/tmux.conf"
+  ;;
+btop)
+  killall -SIGUSR2 btop
+  ;;
+*)
+  echo "Unsupported app: ${APP}"
+  exit 1
+  ;;
+esac 2>/dev/null || true

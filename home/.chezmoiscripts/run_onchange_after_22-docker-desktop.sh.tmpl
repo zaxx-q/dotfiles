@@ -1,0 +1,20 @@
+{{- if and .gui .email (eq .chezmoi.os "linux") (ne .distro "unsupported") -}}
+#!/usr/bin/env bash
+# Docker Desktop needs a password store to keep credentials. Only does anything
+# when docker-desktop is one of your packages (add it with the *_extras lists in
+# .chezmoidata/packages.yaml).
+{{ template "prelude" . }}
+
+{{ template "effective-packages" . }}
+
+if _has_package "docker-desktop"; then
+  _info "CONFIGURE DOCKER DESKTOP"
+
+  if [ -f "${XDG_CONFIG_HOME}/password-store/.gpg-id" ]; then
+    _skipping "'${XDG_CONFIG_HOME}/password-store' already exists for Docker Desktop"
+  else
+    printf "Creating password store for Docker Desktop...\n\n"
+    pass init {{ template "shquote" .email }}
+  fi
+fi
+{{- end }}

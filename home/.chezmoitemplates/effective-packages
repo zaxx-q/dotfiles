@@ -1,0 +1,34 @@
+{{- /*
+  Prints EFFECTIVE_PACKAGES=( ... ) with every system package that is going to
+  be installed on this machine, for scripts that need to know ("is docker
+  installed?"). It's the equivalent of dotfriedrice's _has_package.
+*/ -}}
+{{- $p := .packages -}}
+EFFECTIVE_PACKAGES=(
+{{- if eq .distro "fedora" -}}
+{{-   template "pkglist" (dict "base" $p.fedora.cli "extras" $p.fedora.cli_extras "skip" $p.fedora.cli_skip) -}}
+{{-   if .gui -}}
+{{-     template "pkglist" (dict "base" $p.fedora.gui "extras" $p.fedora.gui_extras "skip" $p.fedora.gui_skip) -}}
+{{-   end -}}
+{{- else if eq .distro "arch" -}}
+{{-   template "pkglist" (dict "base" $p.arch.cli "extras" $p.arch.cli_extras "skip" $p.arch.cli_skip) -}}
+{{-   template "pkglist" (dict "base" $p.arch.aur "extras" $p.arch.aur_extras "skip" $p.arch.aur_skip) -}}
+{{-   if .gui -}}
+{{-     template "pkglist" (dict "base" $p.arch.gui "extras" $p.arch.gui_extras "skip" $p.arch.gui_skip) -}}
+{{-     template "pkglist" (dict "base" $p.arch.aur_gui "extras" $p.arch.aur_gui_extras "skip" $p.arch.aur_gui_skip) -}}
+{{-   end -}}
+{{- else if eq .distro "debian" -}}
+{{-   template "pkglist" (dict "base" $p.debian.cli "extras" $p.debian.cli_extras "skip" $p.debian.cli_skip) -}}
+{{- else if eq .distro "darwin" -}}
+{{-   template "pkglist" (dict "base" $p.darwin.brew "extras" $p.darwin.brew_extras "skip" $p.darwin.brew_skip) -}}
+{{-   template "pkglist" (dict "base" $p.darwin.cask "extras" $p.darwin.cask_extras "skip" $p.darwin.cask_skip) -}}
+{{- end }}
+)
+
+_has_package() {
+  local package
+  for package in "${EFFECTIVE_PACKAGES[@]}"; do
+    [[ "${package}" == "${1}" ]] && return 0
+  done
+  return 1
+}

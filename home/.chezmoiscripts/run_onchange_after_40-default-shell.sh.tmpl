@@ -1,0 +1,28 @@
+{{- if ne .distro "unsupported" -}}
+#!/usr/bin/env bash
+# Make zsh your login shell. Was the end of `configure_shell` in the old script.
+{{ template "prelude" . }}
+
+_info "CONFIGURE SHELL (ZSH)"
+
+shell_path="$(command -v zsh || true)"
+
+if [ -z "${shell_path}" ]; then
+  _warning "zsh isn't installed yet, skipping. Run: chezmoi state delete-bucket --bucket=scriptState && chezmoi apply"
+  exit 0
+fi
+
+if ! grep -q "^${shell_path}$" /etc/shells; then
+  echo "${shell_path}" | sudo tee -a /etc/shells 1>/dev/null
+fi
+
+if [ "${SHELL: -3}" != "zsh" ]; then
+  if [ -t 0 ]; then
+    chsh -s "${shell_path}"
+  else
+    _warning "No terminal to ask for your password, run: chsh -s ${shell_path}"
+  fi
+else
+  _skipping "zsh is already your login shell"
+fi
+{{- end }}

@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+<action>
+	<icon>utilities-terminal</icon>
+	<name>Open Terminal Here</name>
+	<submenu></submenu>
+	<unique-id>1781764519674275-1</unique-id>
+	<command>ghostty --gtk-single-instance=false --working-directory=%f</command>
+	<description></description>
+	<range></range>
+	<patterns>*</patterns>
+	<startup-notify/>
+	<directories/>
+</action>
+<action>
+	<icon>edit-copy</icon>
+	<name>Copy Path</name>
+	<submenu></submenu>
+	<unique-id>1782322031564567-1</unique-id>
+	<command>bash -c &apos;for f in &quot;$@&quot;; do echo &quot;$f&quot;; done | sed &quot;s|^$HOME|~|&quot; | wl-copy -n&apos; _ %F</command>
+	<description>Copy absolute file path to clipboard</description>
+	<range></range>
+	<patterns>*</patterns>
+	<directories/>
+	<audio-files/>
+	<image-files/>
+	<other-files/>
+	<text-files/>
+	<video-files/>
+</action>
+<action>
+	<icon>dev.zed.Zed</icon>
+	<name>Open in $EDITOR</name>
+	<submenu></submenu>
+	<unique-id>1782752327702618-1</unique-id>
+	<command>zed --wait %f</command>
+	<description></description>
+	<range></range>
+	<patterns>*</patterns>
+	<image-files/>
+	<other-files/>
+	<text-files/>
+</action>
+<action>
+	<icon>stock_folder-copy</icon>
+	<name>Check if different</name>
+	<submenu>Compare</submenu>
+	<unique-id>1782906810362187-1</unique-id>
+	<command>~/.local/bin/local/smart-compare %F</command>
+	<description></description>
+	<range>2-20</range>
+	<patterns>*</patterns>
+	<audio-files/>
+	<image-files/>
+	<other-files/>
+	<text-files/>
+	<video-files/>
+</action>
+<action>
+	<icon>org.gnome.Meld</icon>
+	<name>Compare with Meld</name>
+	<submenu>Compare</submenu>
+	<unique-id>1783582118273125-1</unique-id>
+	<command>meld %F</command>
+	<description>Compare selected files or directories</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<directories/>
+	<audio-files/>
+	<image-files/>
+	<other-files/>
+	<text-files/>
+	<video-files/>
+</action>
+<action>
+	<icon>address-book-new</icon>
+	<name>Add to zoxide or increase score</name>
+	<submenu></submenu>
+	<unique-id>1783849992215687-1</unique-id>
+	<command>zoxide add %f</command>
+	<description>Make sure to deselect everything first</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<directories/>
+</action>
+<action>
+	<icon>emblem-symbolic-link</icon>
+	<name>Check Hard Link</name>
+	<submenu></submenu>
+	<unique-id>1784372785141578-1</unique-id>
+	<command>~/.local/bin/local/thunar-hardlink-check %F</command>
+	<description></description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<directories/>
+	<audio-files/>
+	<image-files/>
+	<other-files/>
+	<text-files/>
+	<video-files/>
+</action>
+<action>
+	<icon>io.github.cboxdoerfer.FSearch</icon>
+	<name>Search with FSearch</name>
+	<submenu></submenu>
+	<unique-id>1787789944069286-1</unique-id>
+	<command>fsearch -s path:\&quot;%f\&quot;\ </command>
+	<description>Open FSearch in this directory</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<directories/>
+</action>
+<action>
+	<icon></icon>
+	<name>Set as Wallpaper</name>
+	<submenu></submenu>
+	<unique-id>1788045482368462-1</unique-id>
+	<command>noctalia msg wallpaper-set %f</command>
+	<description>Set selected image as desktop background</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<image-files/>
+</action>
+<action>
+	<icon>bookmark-new</icon>
+	<name>Add to Bookmarks</name>
+	<submenu></submenu>
+	<unique-id>1788518931959208-3</unique-id>
+	<command>{{ .chezmoi.homeDir }}/.local/bin/local/bookmarks-add %F</command>
+	<description>Add to Noctalia Bookmarks plugin data</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<directories/>
+	<audio-files/>
+	<image-files/>
+	<other-files/>
+	<text-files/>
+	<video-files/>
+</action>
+<action>
+	<icon>edit-paste</icon>
+	<name>Paste as File</name>
+	<submenu></submenu>
+	<unique-id>1788920859161936-1</unique-id>
+	<command>paste-clipboard-as-file %f</command>
+	<description>Paste clipboard image as WebP or text into a new file</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<directories/>
+</action>
+<action>
+	<icon>video-x-generic</icon>
+	<name>Convert for DaVinci Resolve (Fast)</name>
+	<submenu>Video</submenu>
+	<unique-id>resolve-convert-lb-20260912</unique-id>
+	<command>{{ .chezmoi.homeDir }}/.local/bin/resolve-convert --thunar convert lb %F</command>
+	<description>Convert in-place to DNxHR LB / PCM directly beside this file</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<audio-files/>
+	<video-files/>
+</action>
+<action>
+	<icon>video-x-generic</icon>
+	<name>Convert for DaVinci Resolve (High Quality)</name>
+	<submenu>Video</submenu>
+	<unique-id>resolve-convert-sq-20260912</unique-id>
+	<command>{{ .chezmoi.homeDir }}/.local/bin/resolve-convert --thunar convert sq %F</command>
+	<description>Convert in-place to DNxHR SQ / PCM directly beside this file</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<audio-files/>
+	<video-files/>
+</action>
+<action>
+	<icon>video-x-generic</icon>
+	<name>Export Web MP4 (Fast AMD)</name>
+	<submenu>Video</submenu>
+	<unique-id>resolve-deliver-fast-20260912</unique-id>
+	<command>{{ .chezmoi.homeDir }}/.local/bin/resolve-convert --thunar deliver fast %F</command>
+	<description>Encode video in-place to H.264/AAC MP4 using AMD hardware</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<video-files/>
+</action>
+<action>
+	<icon>video-x-generic</icon>
+	<name>Export Web MP4 (Best Quality CPU)</name>
+	<submenu>Video</submenu>
+	<unique-id>resolve-deliver-quality-20260912</unique-id>
+	<command>{{ .chezmoi.homeDir }}/.local/bin/resolve-convert --thunar deliver quality %F</command>
+	<description>Encode video in-place to high quality H.264/AAC MP4 using CPU x264</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<video-files/>
+</action>
+<action>
+	<icon>camera-video</icon>
+	<name>Compare Videos</name>
+	<submenu>Compare</submenu>
+	<unique-id>1789869891434855-1</unique-id>
+	<command>bash -c &apos;if [ &quot;$#&quot; -lt 2 ]; then zenity --error --text=&quot;Select at least 2 video files to compare.&quot;; else video-compare &quot;$@&quot;; fi&apos; _ %F</command>
+	<description>Compare selected videos with video-compare</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<video-files/>
+</action>
+<action>
+	<icon>audio-volume-low</icon>
+	<name>Denoise</name>
+	<submenu>Audio</submenu>
+	<unique-id>1790051309681548-1</unique-id>
+	<command>thunar-deepfilter %F</command>
+	<description>Remove noise from speech using DeepFilterNet</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<audio-files/>
+	<video-files/>
+</action>
+<action>
+	<icon>audio-volume-high</icon>
+	<name>Denoise + Normalize (EBU R128)</name>
+	<submenu>Audio</submenu>
+	<unique-id>1790051409769577-2</unique-id>
+	<command>thunar-deepfilter --normalize %F</command>
+	<description>Remove noise from speech using DeepFilterNet and then normalize</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<audio-files/>
+	<video-files/>
+</action>
+<action>
+	<icon>audio-speakers</icon>
+	<name>Denoise (Heavy) + Normalize</name>
+	<submenu>Audio</submenu>
+	<unique-id>1790053200484037-3</unique-id>
+	<command>thunar-deepfilter --pf --atten 40 --normalize %F</command>
+	<description>Remove heavy noise from speech using DeepFilterNet and normalize</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<audio-files/>
+	<video-files/>
+</action>
+<action>
+	<icon>audio-card</icon>
+	<name>Extract Audio to Opus (.ogg)</name>
+	<submenu>Video</submenu>
+	<unique-id>1790054734239877-4</unique-id>
+	<command>bash -c &apos;notify-send &quot;Audio Extraction&quot; &quot;Started converting $# file(s)...&quot; -i multimedia-audio-player; for f in &quot;$@&quot;; do ffmpeg -y -i &quot;$f&quot; -vn -c:a libopus -b:a 128k &quot;${f%%.*}.ogg&quot;; done; notify-send &quot;Audio Extraction&quot; &quot;Finished converting $# file(s)!&quot; -i dialog-information&apos; _ %F</command>
+	<description>Converts video audio to Opus format inside an Ogg container</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<video-files/>
+</action>
+<action>
+	<icon>image-x-generic</icon>
+	<name>Convert to WebP</name>
+	<submenu></submenu>
+	<unique-id>1791505529038504-1</unique-id>
+	<command>bash -c &apos;if {{ .chezmoi.homeDir }}/.local/bin/convert img2webp &quot;$@&quot;; then if [ &quot;$#&quot; -eq 1 ]; then msg=&quot;Converted 1 image to WebP&quot;; else msg=&quot;Converted $# images to WebP&quot;; fi; notify-send &quot;Convert to WebP&quot; &quot;$msg&quot; -i image-x-generic; else notify-send -u critical &quot;Convert to WebP&quot; &quot;Failed to convert image(s)&quot; -i dialog-error; fi&apos; _ %F</command>
+	<description>Convert image(s) to WebP</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<image-files/>
+</action>
+</actions>

@@ -1,0 +1,28 @@
+{{- /*
+  Things chezmoi downloads for you on `chezmoi apply`.
+  Refresh them with: chezmoi apply --refresh-externals
+*/ -}}
+
+# tmux plugin manager. The plugins it manages (see tmux.conf) get installed by
+# .chezmoiscripts/run_onchange_after_32-tmux-plugins.sh.tmpl.
+[".config/tmux/plugins/tpm"]
+  type = "git-repo"
+  url = "https://github.com/tmux-plugins/tpm.git"
+  refreshPeriod = "168h"
+  [".config/tmux/plugins/tpm".clone]
+    args = ["--depth", "1"]
+  [".config/tmux/plugins/tpm".pull]
+    args = ["--ff-only"]
+
+{{- /* Standalone scripts, replaces SCRIPTS_INSTALL. */ -}}
+{{- $skip := .external_scripts.skip -}}
+{{- $scripts := concat .external_scripts.default .external_scripts.extras -}}
+{{ range $scripts }}
+{{-   if not (has .name $skip) }}
+
+[".local/bin/{{ .name }}"]
+  type = "file"
+  url = {{ .url | quote }}
+  executable = true
+{{-   end }}
+{{- end }}

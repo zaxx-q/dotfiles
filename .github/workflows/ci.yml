@@ -1,0 +1,27 @@
+name: "CI"
+
+on:
+  pull_request:
+    branches:
+      - "*"
+  push:
+    branches:
+      - "main"
+      - "master"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: "ubuntu-24.04"
+
+    steps:
+      - uses: "actions/checkout@v6"
+
+      - name: "Install chezmoi"
+        run: |
+          sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "${HOME}/.local/bin"
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: "Linting and testing"
+        run: |
+          ./run ci:test

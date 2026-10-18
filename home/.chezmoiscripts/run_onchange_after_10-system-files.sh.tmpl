@@ -1,0 +1,143 @@
+{{- if and (eq .chezmoi.os "linux") (ne .distro "unsupported") -}}
+#!/usr/bin/env bash
+# Files that live outside of $HOME (/etc, /usr/share, ...). chezmoi can only
+# manage $HOME, so these are copied with sudo. This replaces the `sudo ln -fns`
+# / `sudo install` entries of CONFIG_INSTALL_* in the old dotfriedrice setup.
+#
+# The sources are in .system/ of this repo. This script runs again whenever one
+# of them changes, the hashes below are what makes that happen.
+#
+# keyd:               {{ include ".system/etc/keyd/default.conf" | sha256sum }}
+# dnf.conf:           {{ include ".system/etc/dnf/dnf.conf" | sha256sum }}
+# pacman-contrib:     {{ include ".system/etc/conf.d/pacman-contrib" | sha256sum }}
+# wayland session:    {{ include ".system/usr/share/wayland-sessions/niri-uwsm.desktop" | sha256sum }}
+# networkd timeout:   {{ include ".system/etc/systemd/system/systemd-networkd-wait-online.service.d/99-network-timeout.conf" | sha256sum }}
+# wsl.conf:           {{ include ".system/etc/wsl.conf" | sha256sum }}
+# windows terminal:   {{ include ".system/wsl/windows-terminal-settings.json" | sha256sum }}
+# mask services:      {{ .mask_services | toJson | sha256sum }}
+{{ template "prelude" . }}
+
+{{ template "effective-packages" . }}
+
+SYSTEM_DIR="{{ .chezmoi.sourceDir }}/.system"
+
+_info "INSTALL SYSTEM FILES"
+
+# Copy a file to a root owned location, but only when it differs.
+_sys_install() {
+  local src="${1}"
+  local dest="${2}"
+
+  # A symlink is what the old dotfriedrice setup created, replace it with a
+  # real file so the repo is no longer referenced from /etc.
+  if sudo test -L "${dest}"; then
+    sudo rm -f "${dest}"
+  fi
+
+  if sudo test -f "${dest}" && sudo cmp -s "${src}" "${dest}"; then
+    _skipping "'${dest}' didn't change"
+  else
+    sudo install -Dm644 "${src}" "${dest}"
+    echo "'${dest}' has been installed"
+  fi
+}
+
+# Keep a one time backup of a real file that is about to be replaced.
+_sys_backup_once() {
+  local path="${1}"
+
+  if sudo test -f "${path}" && ! sudo test -L "${path}" && ! sudo test -e "${path}.bak"; then
+    sudo cp -a "${path}" "${path}.bak"
+    echo "Backed up '${path}' to '${path}.bak'"
+  fi
+}
+
+# keyd key remapping, only when keyd is one of the packages of this machine.
+if _has_package "keyd"; then
+  _sys_install "${SYSTEM_DIR}/etc/keyd/default.conf" /etc/keyd/default.conf
+
+  if command -v keyd >/dev/null 2>&1 && systemctl is-active --quiet keyd.service 2>/dev/null; then
+    sudo keyd reload || true
+  fi
+fi
+
+{{ if .gui }}
+# The niri session that gets listed in your display / login manager.
+if [ "${GUI_ENABLED}" == "1" ]; then
+  _sys_install "${SYSTEM_DIR}/usr/share/wayland-sessions/niri-uwsm.desktop" /usr/share/wayland-sessions/niri-uwsm.desktop
+
+{{- if not (has "networkd-wait-online-timeout" .skip.system) }}
+
+  _sys_install "${SYSTEM_DIR}/etc/systemd/system/systemd-networkd-wait-online.service.d/99-network-timeout.conf" \
+    /etc/systemd/system/systemd-networkd-wait-online.service.d/99-network-timeout.conf
+{{- end }}
+fi
+{{ end }}
+
+{{ if or (eq .distro "arch") (eq .distro "fedora") }}
+# Both distros use the systemd-resolved stub resolver. Leave WSL and containers
+# alone since they manage /etc/resolv.conf themselves.
+if [[ "${OS_IN_WSL}" != "1" && "${OS_IN_CONTAINER}" != "1" ]]; then
+  if [ "$(readlink /etc/resolv.conf || true)" != "/run/systemd/resolve/stub-resolv.conf" ]; then
+    sudo ln -fns /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+    echo "'/etc/resolv.conf' now points to the systemd-resolved stub"
+  else
+    _skipping "'/etc/resolv.conf' already points to the systemd-resolved stub"
+  fi
+fi
+{{ end }}
+
+{{ if eq .distro "arch" }}
+# Arch (pacman-contrib, which provides paccache).
+_sys_backup_once /etc/conf.d/pacman-contrib
+_sys_install "${SYSTEM_DIR}/etc/conf.d/pacman-contrib" /etc/conf.d/pacman-contrib
+
+# A symlink here is a leftover of the old setup, an optional 02-ignore.conf is
+# not part of this repo anymore. A real file is yours and gets left alone.
+if sudo test -L /etc/pacman.d/02-ignore.conf; then
+  sudo rm -f /etc/pacman.d/02-ignore.conf
+fi
+{{ end }}
+
+{{ if eq .distro "fedora" }}
+# Fedora (DNF options such as parallel downloads and fastest mirror).
+_sys_backup_once /etc/dnf/dnf.conf
+_sys_install "${SYSTEM_DIR}/etc/dnf/dnf.conf" /etc/dnf/dnf.conf
+{{ end }}
+
+{{ if .wsl }}
+# WSL 2
+_sys_install "${SYSTEM_DIR}/etc/wsl.conf" /etc/wsl.conf
+
+# shellcheck disable=SC2016
+windows_user="$(powershell.exe '$env:UserName' 2>/dev/null | tr -d '\r\n' || true)"
+
+if [ -n "${windows_user}" ]; then
+  windows_terminal_dir="/mnt/c/Users/${windows_user}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState"
+
+  if [ -d "${windows_terminal_dir}" ]; then
+    cp "${SYSTEM_DIR}/wsl/windows-terminal-settings.json" "${windows_terminal_dir}/settings.json" || true
+    echo "Windows Terminal settings copied to '${windows_terminal_dir}'"
+  else
+    _warning "Windows Terminal's settings directory wasn't found for '${windows_user}', skipping"
+  fi
+else
+  _warning "Could not determine your Windows user name, skipping the Windows Terminal settings"
+fi
+{{ end }}
+
+{{ if .mask_services }}
+# Units that slow down boot and aren't needed.
+{{- range .mask_services }}
+if command -v systemctl >/dev/null 2>&1 && systemctl cat {{ . | quote }} >/dev/null 2>&1; then
+  if [ "$(systemctl is-enabled {{ . | quote }} 2>/dev/null || true)" != "masked" ]; then
+    sudo systemctl disable {{ . | quote }} || true
+    sudo systemctl mask {{ . | quote }}
+    echo "'{{ . }}' has been disabled and masked"
+  else
+    _skipping "'{{ . }}' is already masked"
+  fi
+fi
+{{- end }}
+{{ end }}
+{{- end }}

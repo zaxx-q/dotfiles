@@ -1,0 +1,174 @@
+# Settings that were scattered over `dotfriedrice-config` and `_install/default/*`.
+#
+# As with packages.yaml, a single machine can override any key from the `[data]`
+# table of ~/.config/chezmoi/chezmoi.toml.
+
+# -----------------------------------------------------------------------------
+# Mise (programming languages and, on Debian, CLI tools)
+# -----------------------------------------------------------------------------
+mise:
+  # Languages installed with `mise use --global`. The key is the binary name,
+  # the value is what gets passed to mise.
+  languages:
+    node: node@24.11
+    python: python@3.14
+  languages_extras:
+    bun: bun@latest
+    uv: uv@latest
+  # Languages from the defaults that you don't want.
+  languages_skip:
+    - node
+    - python
+  # CLI tools that mise installs (`mise use --global`), per distro. They're
+  # empty everywhere except Debian, where these tools aren't packaged.
+  arch: []
+  arch_extras: []
+  arch_skip: []
+  fedora: []
+  fedora_extras: []
+  fedora_skip: []
+  darwin: []
+  darwin_extras: []
+  darwin_skip: []
+  debian:
+    - bat
+    - btop
+    - eza
+    - fastfetch
+    - fd
+    - fzf
+    - jq
+    - ripgrep
+    - shellcheck
+    - shfmt
+    - tmux
+    - yq
+  debian_extras: []
+  debian_skip: []
+
+# -----------------------------------------------------------------------------
+# Fonts (GUI and CLI)
+# -----------------------------------------------------------------------------
+# Each entry is a download URL plus the file name patterns to take from it.
+# `fonts_skip` entries are substrings that are matched against the URL.
+fonts:
+  default:
+    - url: https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Inconsolata.zip
+      files: ["InconsolataNerdFont*.ttf"]
+  extras:
+    - url: https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip
+      files: ["InterVariable.ttf", "InterVariable-Italic.ttf"]
+    - url: https://github.com/tonsky/FiraCode/releases/download/6.2/Fira_Code_v6.2.zip
+      files: ["FiraCode-VF.ttf"]
+  skip: []
+
+# -----------------------------------------------------------------------------
+# Standalone scripts downloaded from GitHub into ~/.local/bin
+# -----------------------------------------------------------------------------
+# These become chezmoi externals (see .chezmoiexternal.toml.tmpl). The version
+# is part of the URL, bump it to upgrade. `scripts_skip` takes the script name.
+external_scripts:
+  default:
+    - name: bmsu
+      url: https://raw.githubusercontent.com/nickjj/bmsu/0.5.1/src/bmsu
+    - name: invoice
+      url: https://raw.githubusercontent.com/nickjj/invoice/v0.1.3/invoice
+    - name: lcurl
+      url: https://raw.githubusercontent.com/nickjj/lcurl/0.1.2/lcurl
+    - name: notes
+      url: https://raw.githubusercontent.com/nickjj/notes/v0.3.1/notes
+    - name: plutus
+      url: https://raw.githubusercontent.com/nickjj/plutus/0.7.3/src/plutus
+    - name: wait-until
+      url: https://raw.githubusercontent.com/nickjj/wait-until/v0.3.1/wait-until
+    - name: webserver
+      url: https://raw.githubusercontent.com/nickjj/webserver/v0.4.2/webserver
+  extras: []
+  skip:
+    - bmsu
+    - invoice
+    - lcurl
+    - notes
+    - plutus
+    - wait-until
+    - webserver
+
+# -----------------------------------------------------------------------------
+# Systemd services enabled after packages are installed (GUI mode only)
+# -----------------------------------------------------------------------------
+# Add flags after the name: "foo.service --user", "foo.service --now".
+# `services_skip` takes just the unit name.
+services:
+  default:
+    - lactd.service
+    - libvirtd.socket
+    - paccache.timer --now
+    - virtlogd.socket
+    - docker.service
+    - docker-desktop.service --user
+  extras:
+    - hd-idle.service
+    - keyd.service
+    - earlyoom.service
+    - mpd.service
+  skip:
+    - lactd.service
+    - libvirtd.socket
+    - paccache.timer
+    - virtlogd.socket
+    - docker.service
+    - docker-desktop.service
+
+# Units that get disabled and masked (Linux only, skipped when the unit does not
+# exist). Useful for services that only slow down boot.
+mask_services:
+  - NetworkManager-wait-online.service
+
+# -----------------------------------------------------------------------------
+# sudoers.d entries and udev rules
+# -----------------------------------------------------------------------------
+# Key = file name, value = file content. __USER__ is replaced with your user.
+sudoers:
+  default:
+    dfr-timedatectl: "__USER__ ALL=(ALL) NOPASSWD: /usr/bin/timedatectl"
+  extras: {}
+  skip:
+    - dfr-timedatectl
+
+# Key = file name without ".rules", value = the rule.
+udev:
+  default: {}
+  extras: {}
+  skip: []
+
+# -----------------------------------------------------------------------------
+# XDG user directories (relative to $HOME, GUI mode only)
+# -----------------------------------------------------------------------------
+# Most of these are scratch locations, anything worth keeping gets organized
+# somewhere else. Music is the exception since music players use it for real.
+xdg:
+  user_dirs:
+    DESKTOP: tmp/desktop
+    DOCUMENTS: docs
+    DOWNLOAD: downloads
+    MUSIC: media/music
+    PICTURES: tmp/pictures
+    PUBLICSHARE: public
+    TEMPLATES: docs/templates
+    VIDEOS: tmp/videos
+
+# -----------------------------------------------------------------------------
+# Targets that this machine does not want chezmoi to manage
+# -----------------------------------------------------------------------------
+# These are the entries from CONFIG_INSTALL_SKIP / CONFIG_INSTALL_GUI_LINUX_SKIP.
+# Paths are relative to $HOME. Remove a line to manage the file again.
+skip:
+  targets:
+    - .config/fastfetch/config.jsonc
+    - .config/fontconfig/fonts.conf
+    - .config/mako
+    - .config/swayidle
+    - .config/waybar
+  # System files that are not installed, see .chezmoiscripts/.
+  system:
+    - networkd-wait-online-timeout
