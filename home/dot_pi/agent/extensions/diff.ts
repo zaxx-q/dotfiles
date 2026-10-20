@@ -77,12 +77,12 @@ export default function (pi: ExtensionAPI) {
     changedFiles = new Set([...difference(gitChanged, gitBaseline), ...toolTouchedFiles]);
 
     if (changedFiles.size > 0) {
-      ctx.ui.notify(`${changedFiles.size} changed file(s). Run /${commandName} to view/open in Zed.`, "info");
+      ctx.ui.notify(`${changedFiles.size} changed file(s). Run /${commandName} to view/open in Pragtical.`, "info");
     }
   });
 
   pi.registerCommand(commandName, {
-    description: "Show files changed by the last agent run and open one in Zed",
+    description: "Show files changed by the last agent run and open one in Pragtical",
     handler: async (args, ctx) => {
       await ctx.waitForIdle();
 
@@ -112,18 +112,18 @@ export default function (pi: ExtensionAPI) {
       }
 
       const labels = files.map((file) => toRelative(ctx.cwd, file));
-      const selected = await ctx.ui.select("Open changed file in Zed", labels);
+      const selected = await ctx.ui.select("Open changed file in Pragtical", labels);
       if (!selected) return;
 
       const selectedIndex = labels.indexOf(selected);
       const file = files[selectedIndex];
       if (!file) return;
 
-      const result = await pi.exec("zed", ["-e", file], { cwd: ctx.cwd, timeout: 5000 });
+      const result = await pi.exec("pragtical", [file], { cwd: ctx.cwd, timeout: 5000 });
       if (result.code === 0) {
-        ctx.ui.notify(`Opened ${selected} in Zed`, "info");
+        ctx.ui.notify(`Opened ${selected} in Pragtical`, "info");
       } else {
-        ctx.ui.notify(result.stderr.trim() || `Failed to open ${selected} in Zed`, "error");
+        ctx.ui.notify(result.stderr.trim() || `Failed to open ${selected} in Pragtical`, "error");
       }
     },
   });

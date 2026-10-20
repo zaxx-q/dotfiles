@@ -109,7 +109,7 @@ while true; do
     TMPFILE="$(mktemp "${TMPDIR:-/tmp}/me.XXXXXX")"
     trap 'rm -f "$TMPFILE"' EXIT
     printf '%s\n' "$CMD" >"$TMPFILE"
-    # $VISUAL and $EDITOR may include arguments (for example, "zed --wait").
+    # $VISUAL and $EDITOR may include arguments.
     # Split the configured command so its executable and arguments are separate.
     read -r -a EDITOR_CMD <<<"${VISUAL:-${EDITOR:-nano}}"
     "${EDITOR_CMD[@]}" "$TMPFILE"

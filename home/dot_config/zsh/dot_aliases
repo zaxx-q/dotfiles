@@ -10,7 +10,7 @@ alias diff="diff --color -u"
 
 alias sz='. ${ZDOTDIR}/.zprofile && . ${ZDOTDIR}/.zshrc'
 alias SZ='tmux-shell-cmd --kill "sz"'
-alias dfr='cd "$(chezmoi git -- rev-parse --show-toplevel)" && zed .'
+alias dfr='cd "$(chezmoi git -- rev-parse --show-toplevel)" && pragtical .'
 
 alias 755d="find . -type d -exec chmod 755 {} \;"
 alias 644f="find . -type f -exec chmod 644 {} \;"
@@ -32,7 +32,7 @@ alias ymp3="yt-dlp --embed-metadata --extract-audio --audio-format mp3"
 # Bash so there's no make limitations like not being able to forward arguments.
 alias run=./run
 
-alias rg="rg --hidden --glob '!.git/*' --hyperlink-format='zed://file/{path}:{line}:{column}' --color=always --smart-case --heading --line-number --sort=path"
+alias rg="rg --hidden --glob '!.git/*' --hyperlink-format='file://{path}:{line}:{column}' --color=always --smart-case --heading --line-number --sort=path"
 
 alias grok="grok --disable-web-search"
 

@@ -7,7 +7,7 @@
 export PATH="${XDG_DATA_HOME}/mise/shims:${HOME}/.local/bin/local:${HOME}/.local/bin:${HOME}/.cargo/bin:${PATH}:${XDG_CACHE_HOME}/.bun/bin"
 
 # Default programs to run.
-export EDITOR="zed --wait"
+export EDITOR="pragtical"
 export DIFFPROG="meld"
 
 # Configure GPG.

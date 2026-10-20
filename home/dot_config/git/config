@@ -1,5 +1,5 @@
 [core]
-  editor = zed --wait
+  editor = pragtical
   pager = delta
   symlinks = true
   autocrlf = input
@@ -13,10 +13,10 @@
   diffFilter = delta --color-only
 
 [diff]
-  tool = zed
+  tool = pragtical
 
-[difftool "zed"]
-  cmd = zed --wait --diff \"$LOCAL\" \"$REMOTE\"
+[difftool "pragtical"]
+  cmd = pragtical \"$LOCAL\" \"$REMOTE\"
 
 [merge]
   tool = meld
