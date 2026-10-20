@@ -68,7 +68,7 @@ packages:
       - zsh
     cli_extras:
       # - hd-idle
-      - keyd
+      - kanata
       # - kdeconnectd
       - trans
       - earlyoom

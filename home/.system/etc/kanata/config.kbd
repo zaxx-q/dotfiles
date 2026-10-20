@@ -1,0 +1,50 @@
+;; Kanata configuration — replaces keyd /etc/keyd/default.conf
+;;
+;; CapsLock: tap → Esc, hold → Meta (Super)
+;; Japanese keyboard ergonomic remappings
+;; Muhenkan held → nav layer (vim-style hjkl + u/d)
+
+(defcfg
+  process-unmapped-keys yes
+)
+
+(defsrc
+  esc
+  caps
+  henkan
+  muhenkan
+  katakanahiragana
+  ¥
+  ro
+  a  h  j  k  l  ;  u  d
+)
+
+(defalias
+  ;; CapsLock: tap → Esc, hold → Meta (overload_tap_timeout = 250)
+  cap (tap-hold-press 250 250 esc lmet)
+
+  ;; Muhenkan: hold → nav layer
+  nav (layer-toggle nav)
+)
+
+(deflayer default
+  esc           ;; esc → pass through (was commented out in keyd)
+  @cap          ;; caps → tap Esc / hold Meta
+  bspc          ;; henkan → backspace
+  @nav          ;; muhenkan → hold for nav layer
+  caps          ;; katakanahiragana → capslock
+  menu          ;; yen → compose (KEY_COMPOSE, aliased as <MENU> in XKB)
+  lsft          ;; ro → shift
+  a  h  j  k  l  ;  u  d
+)
+
+(deflayer nav
+  _
+  _
+  _
+  _
+  _
+  _
+  _
+  home  left  down  up  right  end  pgup  pgdn
+)

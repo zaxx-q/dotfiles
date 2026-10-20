@@ -14,7 +14,7 @@
 # is installed to the same path under /, see the SYSTEM_SCOPES loop below. Add
 # one with `./run sys:add /etc/some/file`.
 #
-# keyd:               {{ include ".system/etc/keyd/default.conf" | sha256sum }}
+# kanata:             {{ include ".system/etc/kanata/config.kbd" | sha256sum }}
 # dnf.conf:           {{ include ".system/etc/dnf/dnf.conf" | sha256sum }}
 # pacman-contrib:     {{ include ".system/etc/conf.d/pacman-contrib" | sha256sum }}
 # wayland session:    {{ include ".system/usr/share/wayland-sessions/niri-uwsm.desktop" | sha256sum }}
@@ -68,19 +68,17 @@ _sys_backup_once() {
   fi
 }
 
-# keyd key remapping, only when keyd is one of the packages of this machine.
-if _has_package "keyd"; then
-  # keyd only has to pick up the config when it changed. It is restarted rather
-  # than reloaded, keyd 2.6.0 segfaulted a few seconds after a `keyd reload`.
-  keyd_changed=1
-  if sudo test -f /etc/keyd/default.conf && sudo cmp -s "${SYSTEM_DIR}/etc/keyd/default.conf" /etc/keyd/default.conf; then
-    keyd_changed=0
+# kanata key remapping, only when kanata is one of the packages of this machine.
+if _has_package "kanata"; then
+  kanata_changed=1
+  if sudo test -f /etc/kanata/config.kbd && sudo cmp -s "${SYSTEM_DIR}/etc/kanata/config.kbd" /etc/kanata/config.kbd; then
+    kanata_changed=0
   fi
 
-  _sys_install "${SYSTEM_DIR}/etc/keyd/default.conf" /etc/keyd/default.conf
+  _sys_install "${SYSTEM_DIR}/etc/kanata/config.kbd" /etc/kanata/config.kbd
 
-  if [ "${keyd_changed}" == "1" ] && systemctl is-active --quiet keyd.service 2>/dev/null; then
-    sudo systemctl restart keyd.service || true
+  if [ "${kanata_changed}" == "1" ] && systemctl is-active --quiet kanata.service 2>/dev/null; then
+    sudo systemctl restart kanata.service || true
   fi
 fi
 

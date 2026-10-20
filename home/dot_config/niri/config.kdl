@@ -495,10 +495,10 @@ binds {
  // Niri has a built-in window switcher you might want to try it to see which one you prefer.
 
  // Hardware keys.
-    F23                      allow-when-locked=true hotkey-overlay-title="Previous track" { spawn "noctalia" "msg" "media" "previous"; }
+    XF86HangupPhone          allow-when-locked=true hotkey-overlay-title="Previous track" { spawn "noctalia" "msg" "media" "previous"; }
     XF86Favorites            allow-when-locked=true hotkey-overlay-title="Next track" { spawn "noctalia" "msg" "media" "next"; }
-    XF86TouchpadOn           allow-when-locked=true hotkey-overlay-title="Play / pause track" { spawn "noctalia" "msg" "media" "toggle"; }
-    XF86TouchpadToggle       repeat=false hotkey-overlay-title="Toggle touchpad" { spawn "toggle-niri-touchpad" "toggle"; }
+    XF86PickupPhone          allow-when-locked=true hotkey-overlay-title="Play / pause track" { spawn "noctalia" "msg" "media" "toggle"; }
+    XF86NotificationCenter   repeat=false hotkey-overlay-title="Toggle touchpad" { spawn "toggle-niri-touchpad" "toggle"; }
     XF86Display              repeat=false hotkey-overlay-title="Display settings" { spawn "noctalia" "msg" "settings-toggle" "monitor"; }
 
  // Audio & Brightness

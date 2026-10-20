@@ -108,7 +108,7 @@ services:
     - docker-desktop.service --user
   extras:
     - hd-idle.service
-    - keyd.service
+    - kanata.service
     - earlyoom.service
     - mpd.service
     - greetd.service
