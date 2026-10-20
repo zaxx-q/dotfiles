@@ -70,10 +70,17 @@ _sys_backup_once() {
 
 # keyd key remapping, only when keyd is one of the packages of this machine.
 if _has_package "keyd"; then
+  # keyd only has to pick up the config when it changed. It is restarted rather
+  # than reloaded, keyd 2.6.0 segfaulted a few seconds after a `keyd reload`.
+  keyd_changed=1
+  if sudo test -f /etc/keyd/default.conf && sudo cmp -s "${SYSTEM_DIR}/etc/keyd/default.conf" /etc/keyd/default.conf; then
+    keyd_changed=0
+  fi
+
   _sys_install "${SYSTEM_DIR}/etc/keyd/default.conf" /etc/keyd/default.conf
 
-  if command -v keyd >/dev/null 2>&1 && systemctl is-active --quiet keyd.service 2>/dev/null; then
-    sudo keyd reload || true
+  if [ "${keyd_changed}" == "1" ] && systemctl is-active --quiet keyd.service 2>/dev/null; then
+    sudo systemctl restart keyd.service || true
   fi
 fi
 

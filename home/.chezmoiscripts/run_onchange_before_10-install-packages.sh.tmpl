@@ -307,12 +307,12 @@ fi
 # ffmpeg, gimp plugins and some multimedia codecs only live in RPM Fusion on
 # Fedora. We enable both free and nonfree but only the free one is needed for
 # the defaults, nonfree is enabled for user convenience.
-if ! sudo dnf repolist enabled | grep --quiet --ignore-case "rpmfusion-free"; then
+if ! rpm -q rpmfusion-free-release >/dev/null 2>&1; then
   sudo dnf install -y \
     "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" || true
 fi
 
-if ! sudo dnf repolist enabled | grep --quiet --ignore-case "rpmfusion-nonfree"; then
+if ! rpm -q rpmfusion-nonfree-release >/dev/null 2>&1; then
   sudo dnf install -y \
     "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" || true
 fi
@@ -333,7 +333,7 @@ sudo dnf upgrade --refresh || true
 if [ "${GUI_ENABLED}" == "1" ]; then
   # Disable repositories that are configured to be skipped but are currently enabled.
   if ((${#FEDORA_COPRS_SKIP[@]} > 0)); then
-    enabled_repos="$(sudo dnf repolist enabled 2>/dev/null || true)"
+    enabled_repos="$(sudo dnf repolist --enabled 2>/dev/null || true)"
     for copr in "${FEDORA_COPRS_SKIP[@]}"; do
       if grep --quiet --ignore-case "copr:copr.fedorainfracloud.org:${copr//\//:}" <<<"${enabled_repos}"; then
         _skipping "COPR '${copr}' is enabled but skipped, disabling it..."
