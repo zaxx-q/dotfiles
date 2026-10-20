@@ -111,6 +111,7 @@ services:
     - keyd.service
     - earlyoom.service
     - mpd.service
+    - greetd.service
   skip:
     - lactd.service
     - libvirtd.socket

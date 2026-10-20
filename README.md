@@ -21,6 +21,7 @@ Contents: [New machine](#setting-up-a-new-machine) ·
 [Workflow](#day-to-day-workflow) ·
 [Command cheat sheet](#command-cheat-sheet) ·
 [Symlinks](#symlinks) ·
+[System files](#system-files) ·
 [Repo layout](#whats-in-the-repo) ·
 [Settings](#settings) ·
 [Scripts and fonts](#scripts-and-fonts) ·
@@ -235,6 +236,46 @@ the mise script has installed bun, which is fine. `~/.XCompose` is one too.
 `resolv.conf` is created by `run_onchange_after_10-system-files`, because chezmoi
 only manages `~`.
 
+## System files
+
+chezmoi only manages `~`, so files such as `/etc/greetd/config.toml` live in
+`home/.system/` (chezmoi ignores that folder) and the `after_10-system-files`
+script copies them with `sudo`. Everything in `home/.system/files/<scope>/` is
+installed to the same path under `/`:
+
+| Folder | Installed on |
+| :-- | :-- |
+| `files/all/` | every Linux machine |
+| `files/gui/` | machines with the desktop (`gui = true`) |
+| `files/fedora/`, `files/arch/`, `files/debian/` | that distro |
+| `files/fedora-gui/`, `files/arch-gui/`, `files/debian-gui/` | that distro, with the desktop |
+
+So `home/.system/files/fedora-gui/etc/greetd/config.toml` ends up as
+`/etc/greetd/config.toml` on a Fedora desktop. A file that is executable in the
+repo is installed with mode 755, the others with 644.
+
+**Add a file**, from the repo (`chezmoi cd`):
+
+```sh
+./run sys:add --scope fedora-gui /etc/greetd/config.toml
+```
+
+That copies it to the right folder (`sudo` is only used for a file you can't
+read), commit it and the next `chezmoi apply` installs it. Run the command again
+to update the copy after you changed the file in `/etc`. Files that aren't world
+readable are refused unless you add `--force`, since they may hold secrets and
+the repo is public. The script runs again by itself when a file in a scope of
+the machine changes.
+
+**Compare** with what's installed: `./run sys:diff` shows what differs between
+the repo and `/` on this machine and exits with 1 if anything does. It's one
+way: edits made in `/etc` aren't picked up until you `sys:add` the file again.
+
+Things to know: a file you remove from the repo stays on the machines that
+already have it. The first time a different real file gets replaced, a `.bak`
+copy is kept next to it. A few files that need a condition (keyd, `dnf.conf`,
+the niri session, WSL) are still listed by hand in the script instead.
+
 ## What's in the repo
 
 | Path | What it is |
@@ -247,7 +288,7 @@ only manages `~`.
 | `home/.chezmoiexternal.toml.tmpl` | Things chezmoi downloads (tpm, scripts from GitHub) |
 | `home/.chezmoiscripts/` | The install scripts |
 | `home/.chezmoitemplates/` | Shared bits for the scripts (shell prelude, package lists) |
-| `home/.system/` | Files that go outside of `~` (`/etc`, `/usr/share`, WSL), copied by a script |
+| `home/.system/` | Files that go outside of `~`, copied by a script. `files/<scope>/` is installed to `/` automatically, see [System files](#system-files) |
 | `_docs/` | Notes on the package lists and the optional scripts, plus a one-off helper that moved a machine off an old symlink based setup |
 | `run` | Lint and format helper, also what CI runs |
 
@@ -334,7 +375,7 @@ they depend on. To force them all to run again, see
 | :-- | :-- |
 | `before_00-create-dirs` | Creates the directories programs expect |
 | `before_10-install-packages` | Packages for Fedora, Arch (pacman + AUR), Debian and macOS, GPU / Wi-Fi / Bluetooth detection, RPM Fusion, Terra, COPRs, mise |
-| `after_10-system-files` | `/etc` and `/usr/share` files from `home/.system/`, resolv.conf, WSL files, masked units |
+| `after_10-system-files` | `/etc` and `/usr/share` files from `home/.system/` (all of `files/<scope>/`), resolv.conf, WSL files, masked units |
 | `after_20-sudoers-udev` | sudoers.d entries (checked with `visudo`) and udev rules, if any are set |
 | `after_21-services-groups` | Enables services and adds you to `docker` / `libvirt` (desktop only) |
 | `after_22-docker-desktop` | `pass init` for Docker Desktop, only if you added that package |

@@ -122,6 +122,146 @@ chezmoi:check() {
   echo "All scripts render and pass for ${#profiles[@]} profiles"
 }
 
+_sys_read() {
+  # Print a file, with sudo only when this user can't read it.
+  if [ -r "${1}" ]; then
+    cat -- "${1}"
+  else
+    sudo cat -- "${1}"
+  fi
+}
+
+_sys_scopes() {
+  # The folders of home/.system/files/ that apply to this machine.
+  local distro gui
+  read -r distro gui <<<"$(chezmoi --source "${1}" execute-template '{{ .distro }} {{ .gui }}')"
+
+  if [ -z "${distro}" ]; then
+    echo "Couldn't read the distro of this machine, has 'chezmoi init' been run?" >&2
+    return 1
+  fi
+
+  echo "all"
+  echo "${distro}"
+
+  if [ "${gui}" == "true" ]; then
+    echo "gui"
+    echo "${distro}-gui"
+  fi
+}
+
+sys:add() {
+  # Copy a file from outside of $HOME into the repo, so that `chezmoi apply`
+  # installs it on every machine it applies to (see home/.system/files/). Run it
+  # again on a file to update the copy. Files in $HOME are for `chezmoi add`.
+  #
+  #   ./run sys:add /etc/greetd/config.toml
+  #   ./run sys:add --scope fedora-gui /etc/greetd/config.toml
+  #
+  # Scopes: all (the default), gui, fedora, arch, debian, fedora-gui, arch-gui,
+  # debian-gui. Files that aren't world readable are refused unless you pass
+  # --force, they may hold secrets and the repo is public.
+  local repo scope="all" force=0 path mode dest
+  local -a paths=()
+  repo="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+  while (("${#}")); do
+    case "${1}" in
+    --scope)
+      scope="${2:-}"
+      shift 2 || shift
+      ;;
+    --force)
+      force=1
+      shift
+      ;;
+    *)
+      paths+=("${1}")
+      shift
+      ;;
+    esac
+  done
+
+  if ((${#paths[@]} == 0)) || ! [[ "${scope}" =~ ^(all|gui|(arch|debian|fedora)(-gui)?)$ ]]; then
+    echo "Usage: ./run sys:add [--scope all|gui|fedora|arch|debian|<distro>-gui] [--force] <absolute path>..." >&2
+    return 1
+  fi
+
+  for path in "${paths[@]}"; do
+    if [[ "${path}" != /* ]] || [[ "${path}/" == */../* ]]; then
+      echo "${path}: needs an absolute path without '..'" >&2
+      return 1
+    elif [[ "${path}" == "${HOME}"/* || "${path}" == /home/* || "${path}" == /root/* ]]; then
+      echo "${path}: that's in a home directory, use 'chezmoi add' for it" >&2
+      return 1
+    elif [ -L "${path}" ]; then
+      echo "${path}: is a symlink, add the file it points to" >&2
+      return 1
+    elif [ -d "${path}" ]; then
+      echo "${path}: is a directory, add its files one by one" >&2
+      return 1
+    elif [ ! -f "${path}" ]; then
+      echo "${path}: no such file" >&2
+      return 1
+    fi
+
+    mode="$(stat -c %a -- "${path}")"
+
+    if ! ((8#${mode} & 4)) && [ "${force}" == "0" ]; then
+      echo "${path}: mode ${mode}, not world readable. It may hold secrets and this repo is public, pass --force to add it anyway" >&2
+      return 1
+    fi
+
+    dest="${repo}/home/.system/files/${scope}${path}"
+
+    mkdir -p -- "$(dirname -- "${dest}")"
+    _sys_read "${path}" >"${dest}.new"
+    mv -- "${dest}.new" "${dest}"
+
+    # Git only remembers whether a file is executable.
+    if ((8#${mode} & 8#111)); then
+      chmod 755 -- "${dest}"
+    else
+      chmod 644 -- "${dest}"
+    fi
+
+    echo "${path} -> ${dest#"${repo}/"}"
+  done
+
+  echo "Installed by 'chezmoi apply' from now on (the system files script runs again)."
+}
+
+sys:diff() {
+  # Compare the system files in the repo with what is installed in / on this
+  # machine, exits with 1 when something differs. For edits made directly in
+  # /etc that you want to keep, run sys:add on the file again.
+  local repo scopes scope scope_dir src dest differs=0
+  repo="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  scopes="$(_sys_scopes "${repo}")"
+
+  while IFS= read -r scope; do
+    scope_dir="${repo}/home/.system/files/${scope}"
+    [ -d "${scope_dir}" ] || continue
+
+    while IFS= read -r -d '' src; do
+      dest="/${src#"${scope_dir}/"}"
+
+      if ! [ -e "${dest}" ] && ! sudo test -e "${dest}"; then
+        echo "missing: ${dest}"
+        differs=1
+      elif ! diff -u --label "installed ${dest}" --label "repo ${src#"${repo}/"}" <(_sys_read "${dest}") "${src}"; then
+        differs=1
+      fi
+    done < <(find "${scope_dir}" -type f -print0 | sort -z)
+  done <<<"${scopes}"
+
+  if [ "${differs}" == "0" ]; then
+    echo "The system files match the repo"
+  fi
+
+  return "${differs}"
+}
+
 quality() {
   # Perform all code quality commands together
   lint "${@}"

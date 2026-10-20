@@ -135,7 +135,11 @@ packages:
       - zathura
       - zathura-djvu
       - zathura-pdf-mupdf
-    gui_extras: []
+    # The login screen: greetd runs the Noctalia greeter, see
+    # .system/files/fedora-gui/etc/greetd/config.toml
+    gui_extras:
+      - greetd
+      - noctalia-greeter
     # The desktop suite (noctalia) already provides: brightnessctl, grim, mako,
     # slurp, swaybg, swayidle, swaylock, waybar
     gui_skip:

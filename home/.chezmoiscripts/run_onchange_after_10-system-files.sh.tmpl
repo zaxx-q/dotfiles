@@ -1,4 +1,7 @@
 {{- if and (eq .chezmoi.os "linux") (ne .distro "unsupported") -}}
+{{- /* The folders of .system/files/ that apply to this machine. */ -}}
+{{- $scopes := list "all" .distro -}}
+{{- if .gui }}{{ $scopes = concat $scopes (list "gui" (printf "%s-gui" .distro)) }}{{ end -}}
 #!/usr/bin/env bash
 # Files that live outside of $HOME (/etc, /usr/share, ...). chezmoi can only
 # manage $HOME, so these are copied with sudo. This replaces the `sudo ln -fns`
@@ -6,6 +9,10 @@
 #
 # The sources are in .system/ of this repo. This script runs again whenever one
 # of them changes, the hashes below are what makes that happen.
+#
+# Most files don't need to be listed here. Everything in .system/files/<scope>/
+# is installed to the same path under /, see the SYSTEM_SCOPES loop below. Add
+# one with `./run sys:add /etc/some/file`.
 #
 # keyd:               {{ include ".system/etc/keyd/default.conf" | sha256sum }}
 # dnf.conf:           {{ include ".system/etc/dnf/dnf.conf" | sha256sum }}
@@ -15,6 +22,14 @@
 # wsl.conf:           {{ include ".system/etc/wsl.conf" | sha256sum }}
 # windows terminal:   {{ include ".system/wsl/windows-terminal-settings.json" | sha256sum }}
 # mask services:      {{ .mask_services | toJson | sha256sum }}
+{{- range $scope := $scopes }}
+{{-   range (glob (printf "%s/.system/files/%s/**/*" $.chezmoi.sourceDir $scope)) }}
+{{-     if not (stat .).isDir }}
+{{-       $rel := trimPrefix (printf "%s/" $.chezmoi.sourceDir) . }}
+# {{ $rel }}: {{ include $rel | sha256sum }}
+{{-     end }}
+{{-   end }}
+{{- end }}
 {{ template "prelude" . }}
 
 {{ template "effective-packages" . }}
@@ -27,6 +42,7 @@ _info "INSTALL SYSTEM FILES"
 _sys_install() {
   local src="${1}"
   local dest="${2}"
+  local mode="${3:-644}"
 
   # A symlink is what the old dotfriedrice setup created, replace it with a
   # real file so the repo is no longer referenced from /etc.
@@ -37,7 +53,7 @@ _sys_install() {
   if sudo test -f "${dest}" && sudo cmp -s "${src}" "${dest}"; then
     _skipping "'${dest}' didn't change"
   else
-    sudo install -Dm644 "${src}" "${dest}"
+    sudo install -Dm"${mode}" "${src}" "${dest}"
     echo "'${dest}' has been installed"
   fi
 }
@@ -104,6 +120,31 @@ fi
 _sys_backup_once /etc/dnf/dnf.conf
 _sys_install "${SYSTEM_DIR}/etc/dnf/dnf.conf" /etc/dnf/dnf.conf
 {{ end }}
+
+# Everything in .system/files/<scope>/ is installed to the same path under /.
+# The scopes of this machine are: {{ join ", " $scopes }}.
+# A file that is executable in the repo gets mode 755, the others 644.
+SYSTEM_SCOPES=({{ range $scopes }}{{ . | quote }} {{ end }})
+
+for scope in "${SYSTEM_SCOPES[@]}"; do
+  scope_dir="${SYSTEM_DIR}/files/${scope}"
+  [ -d "${scope_dir}" ] || continue
+
+  while IFS= read -r -d '' src; do
+    dest="/${src#"${scope_dir}/"}"
+    mode=644
+    if [ -x "${src}" ]; then
+      mode=755
+    fi
+
+    # Keep a one time backup of a real file that this is about to replace.
+    if sudo test -f "${dest}" && ! sudo cmp -s "${src}" "${dest}"; then
+      _sys_backup_once "${dest}"
+    fi
+
+    _sys_install "${src}" "${dest}" "${mode}"
+  done < <(find "${scope_dir}" -type f -print0 | sort -z)
+done
 
 {{ if .wsl }}
 # WSL 2
