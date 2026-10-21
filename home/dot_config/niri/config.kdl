@@ -72,6 +72,8 @@ input {
         // Disable acceleration.
         accel-profile "flat"
         // scroll-method "two-finger"
+        click-method "button-areas"
+        // middle-emulation
     }
 
     mouse {
@@ -479,13 +481,13 @@ window-rule {
 
 // ----------------------------------------------------------------------------
 // Key binds
-// Available hotkeys: Mod + U -I -O -H -J
+// Available hotkeys: Mod + U I -O -H -J -Y
 // ----------------------------------------------------------------------------
 
 binds {
  // Core Noctalia binds
     Mod+Space                hotkey-overlay-title="Launcher" { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
-    Mod+N                    hotkey-overlay-title="Control center" { spawn "noctalia" "msg" "panel-toggle" "control-center"; }
+    Mod+Alt+N                hotkey-overlay-title="Control center" { spawn "noctalia" "msg" "panel-toggle" "control-center"; }
     Mod+Alt+Comma            hotkey-overlay-title="Settings" { spawn "noctalia" "msg" "settings-toggle"; }
     Mod+V                    hotkey-overlay-title="Clipboard" { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
     Mod+Grave                hotkey-overlay-title="Session" { spawn "noctalia" "msg" "panel-toggle" "session"; }
@@ -536,7 +538,7 @@ binds {
     Mod+Alt+P                hotkey-overlay-title="Open Crashes Panel" { spawn "noctalia" "msg" "panel-toggle" "umedbazarov/crashes:panel"; }
  // Mod+Shift+P              hotkey-overlay-title="Pick color" { spawn-sh "killall hyprpicker || hyprpicker --autocopy --lowercase-hex"; }
 
-    Mod+U                    hotkey-overlay-title="Cast focused window" { spawn-sh "niri msg action set-dynamic-cast-window --id $(niri msg --json focused-window | jq .id)"; }
+    Mod+Y                    hotkey-overlay-title="Cast focused window" { spawn-sh "niri msg action set-dynamic-cast-window --id $(niri msg --json focused-window | jq .id)"; }
     Mod+Alt+Y                repeat=false hotkey-overlay-title="Mirror focused monitor to a window" { spawn-sh "wl-mirror $(niri msg --json focused-output | jq -r .name)"; }
     Mod+Alt+V                hotkey-overlay-title="Select region to make it float/Pin to screen" { spawn "pin-to-screen"; }
     Alt+Q                    repeat=false hotkey-overlay-title="Ask Google AI" { spawn "bash" "-c" "sentinel='🔍'; query=$(printf '%s\n' \"$sentinel\" | noctalia dmenu -p 'Ask Google AI'); if [ -z \"$query\" ] || [ \"$query\" = \"$sentinel\" ]; then exit 0; fi; encoded=$(jq -rn --arg q \"$query\" '$q|@uri'); niri msg action spawn -- xdg-open \"https://www.google.com/search?q=${encoded}&udm=50\""; }
@@ -573,7 +575,7 @@ binds {
  // XF86MonBrightnessUp      allow-when-locked=true hotkey-overlay-title="Increase brightness" { spawn "brightnessctl" "--class=backlight" "set" "+5%"; }
  // XF86MonBrightnessDown    allow-when-locked=true hotkey-overlay-title="Decrease brightness" { spawn "brightnessctl" "--class=backlight" "set" "5%-"; }
 
-    XF86Calculator           repeat=false hotkey-overlay-title="Launcher (calculator)" { spawn "noctalia" "msg" "panel-toggle" "yuuto/calculator:panel"; }
+    Mod+K           repeat=false hotkey-overlay-title="Launcher (calculator)" { spawn "noctalia" "msg" "panel-toggle" "yuuto/calculator:panel"; }
  // Mod+K                    repeat=false hotkey-overlay-title="Launcher (calculator)" { spawn "walker" "--provider" "calc"; }
 
  // Launcher.
@@ -597,7 +599,8 @@ binds {
     Mod+B                    hotkey-overlay-title="Browser" { spawn "launch-or-cycle" "zen:zen-browser"; }
  // Mod+Alt+B                hotkey-overlay-title="Browser (private)" { spawn "zen-browser" "-private-window"; }
     Mod+Ctrl+B               hotkey-overlay-title="Browser (isolated profile)" { spawn-sh "zen-browser -P ${BROWSER_ISOLATED_PROFILE:-isolated}"; }
-    Mod+I                    hotkey-overlay-title="Open scrcpy" { spawn "scrcpy-daily"; }
+    Mod+O                    hotkey-overlay-title="Open annotation tool" { spawn "wayscriber" "--active"; }
+    Mod+N                    hotkey-overlay-title="Open Notes" { spawn "noctalia" "msg" "panel-toggle" "noctalia/notes:panel"; }
 
     Ctrl+Grave               { spawn "AIPromptBridge" "--trigger" "textedit"; }
     Ctrl+Shift+Grave         { spawn "AIPromptBridge" "--trigger" "textedit-clipboard"; }
@@ -620,7 +623,7 @@ binds {
 
     Mod+Z                    repeat=false hotkey-overlay-title="Toggle floating window" { toggle-window-floating; }
     Mod+T                    hotkey-overlay-title="Switch focus between floating and tiling"{ switch-focus-between-floating-and-tiling; }
-    Mod+O                    repeat=false hotkey-overlay-title="Toggle focused window glass/readability" { toggle-window-rule-opacity; }
+    Mod+Alt+O                repeat=false hotkey-overlay-title="Toggle focused window glass/readability" { toggle-window-rule-opacity; }
     Mod+Shift+O              repeat=false hotkey-overlay-title="Toggle all window glass styling" { spawn "toggle-niri-glass"; }
     Mod+Shift+G              repeat=false hotkey-overlay-title="Toggle zero gaps and borders (flush layout)" { spawn "toggle-niri-gaps"; }
 

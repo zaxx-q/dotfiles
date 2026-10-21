@@ -20,8 +20,16 @@
 )
 
 (defalias
-  ;; CapsLock: tap → Esc, hold → Meta (overload_tap_timeout = 250)
-  cap (tap-hold-press 250 250 esc lmet)
+  ;; CapsLock: tap → Esc, hold → Meta
+  ;; Meta activates instantly on press. If released within 250ms without
+  ;; pressing another key, Meta is released and Esc is tapped instead.
+  cap (multi
+        lmet
+        (tap-hold-press 250 250
+          (multi (release-key lmet) esc)  ;; tap: undo Meta, send Esc
+          XX                              ;; hold: nop (Meta already active)
+        )
+      )
 
   ;; Muhenkan: hold → nav layer
   nav (layer-toggle nav)
