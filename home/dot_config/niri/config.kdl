@@ -130,6 +130,11 @@ output "eDP-1" {
 screenshot-path null
 // screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 
+// Disable the primary selection, including standard middle-click paste.
+clipboard {
+    disable-primary
+}
+
 hotkey-overlay {
     // Avoid auto-showing the important hotkeys menu.
     skip-at-startup

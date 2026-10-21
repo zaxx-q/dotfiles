@@ -1,0 +1,36 @@
+{{- if and .gui (eq .chezmoi.os "linux") (ne .distro "unsupported") -}}
+#!/usr/bin/env bash
+# Permanent user-level GSettings tweaks. Add further _set_gsetting calls below;
+# desired values use GVariant syntax, e.g. "false", "42", or "'text'".
+{{ template "prelude" . }}
+
+_info "CONFIGURE GSETTINGS"
+
+if ! command -v gsettings >/dev/null 2>&1; then
+  _warning "'gsettings' isn't installed, skipping"
+  exit 0
+fi
+
+_set_gsetting() {
+  local schema="${1}"
+  local key="${2}"
+  local desired="${3}"
+  local current
+
+  if ! current="$(gsettings get "${schema}" "${key}" 2>/dev/null)"; then
+    _warning "'${schema} ${key}' is unavailable, skipping"
+    return
+  fi
+
+  if [ "${current}" = "${desired}" ]; then
+    _skipping "'${schema} ${key}' is already '${desired}'"
+  elif gsettings set "${schema}" "${key}" "${desired}"; then
+    echo "'${schema} ${key}' has been set to '${desired}'"
+  else
+    _warning "Could not set '${schema} ${key}' to '${desired}'"
+  fi
+}
+
+# Add permanent GSettings tweaks here.
+_set_gsetting "org.gnome.desktop.interface" "gtk-enable-primary-paste" "false"
+{{- end }}
