@@ -77,12 +77,12 @@ export default function (pi: ExtensionAPI) {
     changedFiles = new Set([...difference(gitChanged, gitBaseline), ...toolTouchedFiles]);
 
     if (changedFiles.size > 0) {
-      ctx.ui.notify(`${changedFiles.size} changed file(s). Run /${commandName} to view/open in Pragtical.`, "info");
+      ctx.ui.notify(`${changedFiles.size} changed file(s). Run /${commandName} to view/open in Kate.`, "info");
     }
   });
 
   pi.registerCommand(commandName, {
-    description: "Show files changed by the last agent run and open one in Pragtical",
+    description: "Show files changed by the last agent run and open one in Kate",
     handler: async (args, ctx) => {
       await ctx.waitForIdle();
 
@@ -112,18 +112,18 @@ export default function (pi: ExtensionAPI) {
       }
 
       const labels = files.map((file) => toRelative(ctx.cwd, file));
-      const selected = await ctx.ui.select("Open changed file in Pragtical", labels);
+      const selected = await ctx.ui.select("Open changed file in Kate", labels);
       if (!selected) return;
 
       const selectedIndex = labels.indexOf(selected);
       const file = files[selectedIndex];
       if (!file) return;
 
-      const result = await pi.exec("pragtical", [file], { cwd: ctx.cwd, timeout: 5000 });
+      const result = await pi.exec("kate", [file], { cwd: ctx.cwd, timeout: 5000 });
       if (result.code === 0) {
-        ctx.ui.notify(`Opened ${selected} in Pragtical`, "info");
+        ctx.ui.notify(`Opened ${selected} in Kate`, "info");
       } else {
-        ctx.ui.notify(result.stderr.trim() || `Failed to open ${selected} in Pragtical`, "error");
+        ctx.ui.notify(result.stderr.trim() || `Failed to open ${selected} in Kate`, "error");
       }
     },
   });

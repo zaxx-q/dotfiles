@@ -104,7 +104,7 @@ packages:
       - pipewire-alsa
       - pipewire-jack-audio-connection-kit
       - pipewire-pulse
-      - pragtical
+      - kate
       - "@virtualization"
       - qt6-qtmultimedia
       - rmpc
@@ -183,7 +183,6 @@ packages:
       - yalter/niri-git
       - scottames/ghostty
       - lionheartp/Hyprland
-      - sentry/pragtical
     coprs_extras: []
     coprs_skip: []
 
@@ -253,6 +252,7 @@ packages:
       - hyprpicker
       - iptables
       - kdenlive
+      - kate
       - keepassxc
       - lact
       - libqalculate

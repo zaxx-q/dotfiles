@@ -117,12 +117,12 @@ Templates see your machine's facts. Print them with `chezmoi data`:
 
 1. Edit. Either `chezmoi edit --apply ~/.config/ghostty/config` (opens the
    repo's copy and applies when you quit), or `chezmoi cd` and edit there, then
-   `chezmoi apply`. The `dfr` alias opens the repo in Pragtical.
+   `chezmoi apply`. The `dfr` alias opens the repo in Kate.
 2. Check with `chezmoi diff`.
 3. Save: `chezmoi git -- add -A`, `chezmoi git -- commit -m "..."`,
    `chezmoi git -- push`. Or `chezmoi cd` and use git as usual.
 
-**An app changed its own config** (Pragtical, the pi agent, ...). Run `chezmoi diff`,
+**An app changed its own config** (the pi agent, ...). Run `chezmoi diff`,
 then `chezmoi re-add` to take the new version into the repo, then commit.
 `re-add` skips templates, so use `chezmoi merge <target>` for those. A few files
 are only created, never overwritten, so edit them freely on a machine:
@@ -397,7 +397,7 @@ swap hardware, force the scripts to run again.
 Anything secret or generated at runtime stays on the machine and is not
 tracked: `~/.pi/agent/{.env,auth.json,mcp-auth.json,cliproxyapi*.json}` and the
 pi caches, shell history, Noctalia's generated theme files (niri's
-`noctalia.kdl`, the ghostty / tmux / fzf / Pragtical / pi themes), SSH and GPG keys.
+`noctalia.kdl`, the ghostty / tmux / fzf / pi themes), SSH and GPG keys.
 The last section of `home/.chezmoiignore` lists them so `chezmoi add` skips them,
 and the `.gitignore` is a second safety net. The repo is public, so
 if you ever want secrets in it, use chezmoi's

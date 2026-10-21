@@ -10,7 +10,7 @@ alias diff="diff --color -u"
 
 alias sz='. ${ZDOTDIR}/.zprofile && . ${ZDOTDIR}/.zshrc'
 alias SZ='tmux-shell-cmd --kill "sz"'
-alias dfr='cd "$(chezmoi git -- rev-parse --show-toplevel)" && pragtical .'
+alias dfr='cd "$(chezmoi git -- rev-parse --show-toplevel)" && kate .'
 
 alias 755d="find . -type d -exec chmod 755 {} \;"
 alias 644f="find . -type f -exec chmod 644 {} \;"
