@@ -535,9 +535,10 @@ binds {
  // Mod+Ctrl+S               hotkey-overlay-title="Screenshot (monitor: focused)" { spawn "dfr-screenshot" "monitor-focused"; }
  // Mod+Ctrl+Shift+S         hotkey-overlay-title="Screenshot (monitor: all)" { spawn "dfr-screenshot" "monitor-all"; }
     Print                    hotkey-overlay-title="Screenshot (region)" { spawn "noctalia" "msg" "screenshot-region"; }
-    Ctrl+Print               hotkey-overlay-title="Screenshot (screen)" { spawn "noctalia" "msg" "screenshot-fullscreen"; }
+    Ctrl+Shift+Print         hotkey-overlay-title="Screenshot (screen)" { spawn "noctalia" "msg" "screenshot-fullscreen"; }
     Shift+Print              hotkey-overlay-title="Screenshot (window)" { screenshot-window; }
     Alt+Print                hotkey-overlay-title="Open screenshot toolkit menu" { spawn "noctalia" "msg" "plugin" "alexander/screen-toolkit:service" "all" "toggle"; }
+    Ctrl+Print               hotkey-overlay-title="Screenshot and annotate" { spawn "tensaku" "--capture"; }
 
     Mod+P                    hotkey-overlay-title="Pick window" { spawn "ghostty" "--class=dfr.floating.ghostty" "-e" "sh" "-c" "printf 'Pick a window...\n\n'; niri msg pick-window; niri msg action focus-window-previous; printf '\nDone! Press CTRL+c to quit\n'; read"; }
     Mod+Alt+P                hotkey-overlay-title="Open Crashes Panel" { spawn "noctalia" "msg" "panel-toggle" "umedbazarov/crashes:panel"; }

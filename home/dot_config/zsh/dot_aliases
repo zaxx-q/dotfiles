@@ -10,7 +10,7 @@ alias diff="diff --color -u"
 
 alias sz='. ${ZDOTDIR}/.zprofile && . ${ZDOTDIR}/.zshrc'
 alias SZ='tmux-shell-cmd --kill "sz"'
-alias dfr='cd "$(chezmoi git -- rev-parse --show-toplevel)" && kate .'
+alias c='cd "$(chezmoi git -- rev-parse --show-toplevel)" && kate .'
 
 alias 755d="find . -type d -exec chmod 755 {} \;"
 alias 644f="find . -type f -exec chmod 644 {} \;"
@@ -41,4 +41,3 @@ alias azan="mise x node -- azaan"
 alias chargethreshold="busctl call org.freedesktop.UPower /org/freedesktop/UPower/devices/battery_BAT0 org.freedesktop.UPower.Device EnableChargeThreshold b true"
 
 alias plan='cd /drive/share/Planner && pi'
-

@@ -1,5 +1,5 @@
 [core]
-  editor = kate
+  editor = kate -b
   pager = delta
   symlinks = true
   autocrlf = input
@@ -13,10 +13,7 @@
   diffFilter = delta --color-only
 
 [diff]
-  tool = kate
-
-[difftool "kate"]
-  cmd = kate --diff \"$LOCAL\" \"$REMOTE\"
+  tool = meld
 
 [merge]
   tool = meld
