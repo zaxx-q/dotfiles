@@ -412,7 +412,7 @@ window-rule {
 }
 
 window-rule {
-    match app-id=r#"^dfr\.floating\.ghostty$"#
+    match app-id=r#"^dfr\.floating\.kitty$"#
     match app-id=r#"^dfr\.floating\.thunar$"#
 
     open-floating true
@@ -460,8 +460,7 @@ window-rule {
     // match app-id=r#"^org\.wezfurlong\.wezterm$"#
     // match app-id="Alacritty"
     match app-id=r#"^zen$"#
-    match app-id=r#"^com\.mitchellh\.ghostty$"#
-    // match app-id="kitty"
+    match app-id="kitty"
     draw-border-with-background false
 }
 /-window-rule {
@@ -540,7 +539,7 @@ binds {
     Alt+Print                hotkey-overlay-title="Open screenshot toolkit menu" { spawn "noctalia" "msg" "plugin" "alexander/screen-toolkit:service" "all" "toggle"; }
     Ctrl+Print               hotkey-overlay-title="Screenshot and annotate" { spawn "tensaku" "--capture"; }
 
-    Mod+P                    hotkey-overlay-title="Pick window" { spawn "ghostty" "--class=dfr.floating.ghostty" "-e" "sh" "-c" "printf 'Pick a window...\n\n'; niri msg pick-window; niri msg action focus-window-previous; printf '\nDone! Press CTRL+c to quit\n'; read"; }
+    Mod+P                    hotkey-overlay-title="Pick window" { spawn "kitty" "--single-instance" "--class=dfr.floating.kitty" "sh" "-c" "printf 'Pick a window...\n\n'; niri msg pick-window; niri msg action focus-window-previous; printf '\nDone! Press CTRL+c to quit\n'; read"; }
     Mod+Alt+P                hotkey-overlay-title="Open Crashes Panel" { spawn "noctalia" "msg" "panel-toggle" "umedbazarov/crashes:panel"; }
  // Mod+Shift+P              hotkey-overlay-title="Pick color" { spawn-sh "killall hyprpicker || hyprpicker --autocopy --lowercase-hex"; }
 
@@ -591,8 +590,8 @@ binds {
 
  // Apps.
     Ctrl+Shift+Escape        repeat=false hotkey-overlay-title="System health" { spawn "dfr-launch-or-focus-tui" "monitor"; }
-    Mod+Return               hotkey-overlay-title="Terminal" { spawn "uwsm-app" "ghostty"; }
-    Mod+Alt+Return           hotkey-overlay-title="Terminal (floating)" { spawn "ghostty" "--gtk-single-instance=true" "--class=dfr.floating.ghostty"; }
+    Mod+Return               hotkey-overlay-title="Terminal" { spawn "uwsm-app" "--" "kitty" "--single-instance"; }
+    Mod+Alt+Return           hotkey-overlay-title="Terminal (floating)" { spawn "kitty" "--single-instance" "--class=dfr.floating.kitty"; }
     Mod+G                    hotkey-overlay-title="File manager" { spawn "uwsm-app" "thunar"; }
     Mod+Alt+G                repeat=false hotkey-overlay-title="File manager (floating)" { spawn "dbus-run-session" "thunar" "--name=dfr.floating.thunar" "downloads"; }
     Mod+J                    repeat=false hotkey-overlay-title="File manager (zoxide)" { spawn "bash" "-c" "choice=$(zoxide query -l | noctalia dmenu -p 'zoxide'); if [ -n \"$choice\" ]; then zoxide add \"$choice\"; niri msg action spawn -- thunar \"$choice\"; fi"; }

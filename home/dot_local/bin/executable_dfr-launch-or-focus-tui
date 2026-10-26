@@ -36,7 +36,7 @@ if [ "${APP_ID}" == "null" ]; then
   # We shift here so that $@ has all of the arguments but not the app name.
   shift
 
-  uwsm-app -- ghostty --class="dfr.ghostty.${APP}" -e "${APP}" "$@"
+  uwsm-app -- kitty --single-instance --class="dfr.kitty.${APP}" "${APP}" "$@"
 else
   niri msg action focus-window --id "${APP_ID}"
 fi

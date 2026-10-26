@@ -44,3 +44,5 @@ export GRADLE_USER_HOME="$HOME/.local/share/gradle"
 # Optional: Tell your system CLI where you chose to download the SDK tools in Step 1
 export ANDROID_HOME="$HOME/.local/share/Android/Sdk"
 export PATH=$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools
+
+export JAVA_HOME="$HOME/.local/share/android-studio/jbr"

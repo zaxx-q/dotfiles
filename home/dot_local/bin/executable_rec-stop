@@ -13,7 +13,7 @@ if [ -z "${NIRI_SOCKET}" ]; then
   exit 1
 fi
 
-GHOSTTY_FONT_SIZE=11
+KITTY_FONT_SIZE=11
 
 # Restore from the backup if it exists. Using mv here is safe because otherwise
 # we would run cp + rm on the file resulting in the same outcome.
@@ -27,8 +27,13 @@ perl -pi -e '
   s/^window-rule { open-maximized .*; }/window-rule { open-maximized false; }/g
 ' "${XDG_CONFIG_HOME}/niri/config.kdl.local"
 
-perl -pi -e "s/^font-size = .*/font-size = ${GHOSTTY_FONT_SIZE}/g" "${XDG_CONFIG_HOME}/ghostty/config.local"
-dfr-reload-app ghostty
+KITTY_CONFIG_LOCAL="${XDG_CONFIG_HOME}/kitty/kitty.conf.local"
+if grep -q '^font_size ' "${KITTY_CONFIG_LOCAL}"; then
+  perl -pi -e "s/^font_size .*/font_size ${KITTY_FONT_SIZE}/g" "${KITTY_CONFIG_LOCAL}"
+else
+  printf '\nfont_size %s\n' "${KITTY_FONT_SIZE}" >>"${KITTY_CONFIG_LOCAL}"
+fi
+dfr-reload-app kitty
 
 output-scale 1.0
 
@@ -37,7 +42,7 @@ cat <<EOF
 
 Nice work, here's a few things to maybe do:
   - Restore tmux sessions by running tmux and then Leader + CTRL + r
-  - Open a new Ghostty tab or window to show font-size adjustments
+  - Open a new Kitty tab or window to show font-size adjustments
   - Close all isolated profile browser windows
     - Example: pkill -f "firefox .* -P isolated"
 EOF

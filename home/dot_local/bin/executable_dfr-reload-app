@@ -27,8 +27,9 @@ mpd)
   mpd
   mpd-mpris &
   ;;
-ghostty)
-  killall -SIGUSR2 ghostty
+kitty)
+  # Kitty watches its configuration files and reloads them automatically.
+  :
   ;;
 tmux)
   tmux source-file "${XDG_CONFIG_HOME}/tmux/tmux.conf"

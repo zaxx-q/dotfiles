@@ -15,7 +15,7 @@ completed() {
 
 trap completed EXIT INT
 
-niri msg action spawn -- ghostty -e sh -c "
+niri msg action spawn -- kitty --single-instance sh -c "
 printf -- '--------------------------------------------------------\n'
 printf 'Welcome to DotFriedRice, this message only appears once!\n'
 printf -- '--------------------------------------------------------\n'

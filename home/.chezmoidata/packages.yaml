@@ -85,8 +85,7 @@ packages:
       - libqalculate
       - qalculate
       - firefox
-      - ghostty
-      - gimp
+      - kitty
       - grim
       - hyprpicker
       - iptables-nft
@@ -95,7 +94,6 @@ packages:
       - lact
       - libreoffice
       - mako
-      - mpd
       - mpv
       - google-noto-color-emoji-fonts
       - niri
@@ -107,7 +105,6 @@ packages:
       - kate
       - "@virtualization"
       - qt6-qtmultimedia
-      - rmpc
       - satty
       - slurp
       - swaybg
@@ -181,7 +178,7 @@ packages:
     # COPR repositories enabled in GUI mode, format "owner/project".
     coprs:
       - yalter/niri-git
-      - scottames/ghostty
+      # Kitty is in Fedora's official repositories; no terminal COPR is needed.
       - lionheartp/Hyprland
     coprs_extras: []
     coprs_skip: []
@@ -246,7 +243,7 @@ packages:
       - docker-compose
       - ffmpegthumbnailer
       - firefox
-      - ghostty
+      - kitty
       - gimp
       - grim
       - hyprpicker
@@ -383,7 +380,7 @@ packages:
     brew_skip: []
     cask:
       - firefox
-      - ghostty
+      - kitty
       - gimp
       - google-chrome
       - keepassxc

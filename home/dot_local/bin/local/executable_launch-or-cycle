@@ -5,8 +5,7 @@
 # Most apps report an app_id that's either the plain binary name or a
 # reverse DNS id ending in it, so one term is enough for both matching and
 # launching:
-#   launch-or-cycle ghostty [ARGS]
-#   launch-or-cycle com.mitchellh.ghostty [ARGS]
+#   launch-or-cycle kitty [ARGS]
 #
 # Some apps report an app_id unrelated to their binary name (e.g. Zen
 # Browser: app_id "zen", binary "zen-browser"). For those, give the match
@@ -43,8 +42,7 @@ WINDOWS_JSON=$(
 if [ "${WINDOWS_JSON}" == "[]" ]; then
   # Nothing running for this app - spawn it. Prefer an explicit
   # match:binary override; otherwise fall back to extracting the last
-  # segment after "." so a reverse DNS id like com.mitchellh.ghostty still
-  # resolves to "ghostty".
+  # segment after "." so a reverse DNS id still resolves to its binary name.
   if [ -n "${SPAWN_OVERRIDE}" ] && [ "${SPAWN_OVERRIDE}" != "${APP_SPEC}" ]; then
     SPAWN_APP="${SPAWN_OVERRIDE}"
   else

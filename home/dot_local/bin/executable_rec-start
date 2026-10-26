@@ -21,7 +21,7 @@ REGION=
 OBS=
 EXIT_EARLY=
 
-GHOSTTY_FONT_SIZE=20
+KITTY_FONT_SIZE=20
 
 OUTPUT_KEYLIGHT_NAME="${OUTPUT_KEYLIGHT_NAME:-HDMI-A-2}"
 OUTPUT_KEYLIGHT_COLOR="${OUTPUT_KEYLIGHT_COLOR:-#ffffff}"
@@ -42,7 +42,7 @@ while [[ "${#}" -gt 0 ]]; do
     ;;
   -s | --scale)
     SCALE=1
-    GHOSTTY_FONT_SIZE=14
+    KITTY_FONT_SIZE=14
     shift
     ;;
   -r | --region)
@@ -83,8 +83,13 @@ fi
 # Avoid adjusting font sizes or anything else.
 [ "${EXIT_EARLY}" == "1" ] && exit
 
-perl -pi -e "s/^font-size = .*/font-size = ${GHOSTTY_FONT_SIZE}/g" "${XDG_CONFIG_HOME}/ghostty/config.local"
-dfr-reload-app ghostty
+KITTY_CONFIG_LOCAL="${XDG_CONFIG_HOME}/kitty/kitty.conf.local"
+if grep -q '^font_size ' "${KITTY_CONFIG_LOCAL}"; then
+  perl -pi -e "s/^font_size .*/font_size ${KITTY_FONT_SIZE}/g" "${KITTY_CONFIG_LOCAL}"
+else
+  printf '\nfont_size %s\n' "${KITTY_FONT_SIZE}" >>"${KITTY_CONFIG_LOCAL}"
+fi
+dfr-reload-app kitty
 
 NIRI_CONFIG_SCALE=
 if [ "${SCALE}" == "1" ]; then
@@ -145,7 +150,7 @@ cat <<EOF
 -> Shell history has been backed up to ${HISTFILE}.bak
 -> Temporary Neovim files have been deleted from ${NEOVIM_SWAP_PATH}
 
-Apply Ghostty font-size adjustments
+Apply Kitty font-size adjustments
 - CTRL + SHIFT + T to open a new tab (or open a new window)
 - Close your original tabs (or windows)
 

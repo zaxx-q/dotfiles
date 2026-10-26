@@ -164,7 +164,7 @@ Custom fonts (such as Nerd Fonts) are managed through the `fonts` lists (`defaul
 | :---------------- | :------------------------------------------------------------------- |
 | chromium          | A web browser built for speed, simplicity, and security              |
 | firefox           | Fast, Private & Safe Web Browser                                     |
-| ghostty           | Fast, native, feature-rich terminal emulator pushing modern features |
+| kitty             | Fast, feature-rich, GPU-accelerated terminal emulator                |
 | gimp              | GNU Image Manipulation Program                                       |
 | kdenlive          | A non-linear video editor for Linux using the MLT video framework    |
 | keepassxc         | Cross-platform community-driven port of Keepass password manager     |
@@ -210,7 +210,7 @@ that DotFriedRice enables automatically:
 
 | Package    | Source                     |
 | :--------- | :------------------------- |
-| `ghostty`  | COPR `scottames/ghostty`   |
+
 | `niri`     | COPR `yalter/niri-git`     |
 | `lact`     | Terra repository           |
 | `satty`    | Terra repository           |

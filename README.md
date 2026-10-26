@@ -115,7 +115,7 @@ Templates see your machine's facts. Print them with `chezmoi data`:
 
 **The loop.** Change something, look at it, save it in git:
 
-1. Edit. Either `chezmoi edit --apply ~/.config/ghostty/config` (opens the
+1. Edit. Either `chezmoi edit --apply ~/.config/kitty/kitty.conf` (opens the
    repo's copy and applies when you quit), or `chezmoi cd` and edit there, then
    `chezmoi apply`. The `dfr` alias opens the repo in Kate.
 2. Check with `chezmoi diff`.
@@ -127,7 +127,7 @@ then `chezmoi re-add` to take the new version into the repo, then commit.
 `re-add` skips templates, so use `chezmoi merge <target>` for those. A few files
 are only created, never overwritten, so edit them freely on a machine:
 `~/.config/mise/config.toml`, `~/.config/git/config.local`,
-`~/.config/ghostty/config.local`, `~/.config/niri/config.kdl.local`,
+`~/.config/kitty/kitty.conf.local`, `~/.config/niri/config.kdl.local`,
 `~/.config/zsh/.zprofile.local`, `~/.config/lazygit/config.yml`,
 `~/.config/xfce4/.../thunar.xml` and `~/.pi/agent/trust.json`.
 
@@ -397,7 +397,7 @@ swap hardware, force the scripts to run again.
 Anything secret or generated at runtime stays on the machine and is not
 tracked: `~/.pi/agent/{.env,auth.json,mcp-auth.json,cliproxyapi*.json}` and the
 pi caches, shell history, Noctalia's generated theme files (niri's
-`noctalia.kdl`, the ghostty / tmux / fzf / pi themes), SSH and GPG keys.
+`noctalia.kdl`, the kitty / tmux / fzf / pi themes), SSH and GPG keys.
 The last section of `home/.chezmoiignore` lists them so `chezmoi add` skips them,
 and the `.gitignore` is a second safety net. The repo is public, so
 if you ever want secrets in it, use chezmoi's

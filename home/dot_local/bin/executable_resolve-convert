@@ -5,7 +5,7 @@
 #   convert  Convert media in-place to DNxHR/PCM (for Resolve import)
 #   deliver  Produce web-ready H.264/AAC MP4 files from Resolve masters
 #
-# The --thunar flag wraps either subcommand in a visible Ghostty terminal,
+# The --thunar flag wraps either subcommand in a visible Kitty terminal,
 # intended for use with Thunar custom actions.
 #
 # Examples:
@@ -19,7 +19,7 @@
 set -Eeuo pipefail
 
 # ---------------------------------------------------------------------------
-# Thunar wrapper: re-exec inside a Ghostty terminal
+# Thunar wrapper: re-exec inside a Kitty terminal
 # ---------------------------------------------------------------------------
 
 if [[ "${1:-}" == "--thunar" ]]; then
@@ -29,9 +29,9 @@ if [[ "${1:-}" == "--thunar" ]]; then
 
   self="$(readlink -f "$0")"
   # shellcheck disable=SC2016
-  exec ghostty --gtk-single-instance=false \
+  exec kitty --single-instance \
     --title="Resolve ${subcmd} (${1:-})" \
-    -e bash -c '
+    bash -c '
       "$1" "$2" "${@:3}"
       status=$?
       printf "\nFinished. Press Enter to close this window..."
@@ -58,7 +58,7 @@ Subcommands:
   convert [lb|sq|hq] <files...>           Convert media to DNxHR/PCM for Resolve
   deliver [--quality|--fast] <files...>    Encode to web-ready H.264/AAC MP4
 
-Add --thunar before the subcommand to run inside a Ghostty terminal window.
+Add --thunar before the subcommand to run inside a Kitty terminal window.
 EOF
   exit 2
   ;;
