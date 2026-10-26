@@ -230,8 +230,8 @@ layout {
         bottom 10
     }
 
-    /-tab-indicator {
-        //off
+    // Show tab state so cast targets remain identifiable in tabbed columns.
+    tab-indicator {
         hide-when-single-tab
         place-within-column
         gap 5
@@ -307,26 +307,29 @@ overview {
     lid-close { spawn "noctalia" "msg" "session" "lock-and-suspend"; }
 }
 
-// Indicate screencasted windows with red colors.
+// Make an actively cast window unmistakable, whether it is focused or not.
 window-rule {
     match is-window-cast-target=true
 
+    // Keep the normal 1px ring to avoid resizing the cast target.
     focus-ring {
-        active-color "#f38ba8"
-        inactive-color "#7d0d2d"
-    }
-
-    border {
-        inactive-color "#7d0d2d"
+        on
+        width 1
+        active-color "#ffcc00"
+        inactive-color "#ff9500"
     }
 
     shadow {
-        color "#7d0d2d70"
+        on
+        softness 18
+        spread 10
+        offset x=0 y=0
+        color "#ff950080"
     }
 
     tab-indicator {
-        active-color "#f38ba8"
-        inactive-color "#7d0d2d"
+        active-color "#ffcc00"
+        inactive-color "#ff9500"
     }
 }
 
