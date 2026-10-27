@@ -150,6 +150,17 @@
 </action>
 <action>
 	<icon>video-x-generic</icon>
+	<name>Compress Videos</name>
+	<submenu>Video</submenu>
+	<unique-id>video-compressor-20261026</unique-id>
+	<command>kitty --hold python3 /drive/share/scripts/video_compressor.py %F</command>
+	<description>Compress the selected video files with FFmpeg Video Compressor</description>
+	<range>*</range>
+	<patterns>*</patterns>
+	<video-files/>
+</action>
+<action>
+	<icon>video-x-generic</icon>
 	<name>Convert for DaVinci Resolve (Fast)</name>
 	<submenu>Video</submenu>
 	<unique-id>resolve-convert-lb-20260912</unique-id>

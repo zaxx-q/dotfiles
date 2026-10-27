@@ -91,6 +91,7 @@ interface PlanState {
 	enabled: boolean;
 	planFile: string | undefined;
 	bashUnrestricted?: boolean;
+	prePlanTools?: string[];
 }
 
 function parsePlanArgs(args?: string): {
@@ -118,6 +119,7 @@ export default function customPlanMode(pi: ExtensionAPI): void {
 	let planEnabled = false;
 	let currentPlanFile: string | undefined;
 	let bashUnrestricted = false;
+	let prePlanTools: string[] | undefined;
 
 	// ── Flags ───────────────────────────────────────────────────────────────
 	pi.registerFlag("plan", {
@@ -146,14 +148,20 @@ export default function customPlanMode(pi: ExtensionAPI): void {
 		}
 	}
 
+	function activePlanTools(): string[] {
+		const active = new Set(pi.getActiveTools());
+		return PLAN_TOOLS.filter((name) => active.has(name));
+	}
+
 	function enterPlanMode(
 		ctx: ExtensionContext,
 		options?: { unrestricted?: boolean },
 	): void {
+		prePlanTools = pi.getActiveTools();
 		planEnabled = true;
 		bashUnrestricted = options?.unrestricted ?? false;
 		currentPlanFile = undefined;
-		pi.setActiveTools(PLAN_TOOLS);
+		pi.setActiveTools(activePlanTools());
 		const notifyMsg = bashUnrestricted
 			? "Plan mode enabled (unrestricted bash) — save plans to plans/. Use /plan to exit."
 			: "Plan mode enabled — read-only tools only. Use /plan to exit.";
@@ -165,8 +173,9 @@ export default function customPlanMode(pi: ExtensionAPI): void {
 	function exitPlanMode(ctx: ExtensionContext): void {
 		planEnabled = false;
 		bashUnrestricted = false;
-		pi.setActiveTools(pi.getAllTools().map((t) => t.name));
-		ctx.ui.notify("Plan mode disabled. Full tool access restored.", "info");
+		pi.setActiveTools(prePlanTools ?? pi.getActiveTools());
+		prePlanTools = undefined;
+		ctx.ui.notify("Plan mode disabled. Previous tool access restored.", "info");
 		updateStatus(ctx);
 		persistState();
 	}
@@ -176,6 +185,7 @@ export default function customPlanMode(pi: ExtensionAPI): void {
 			enabled: planEnabled,
 			planFile: currentPlanFile,
 			bashUnrestricted,
+			prePlanTools,
 		} as PlanState);
 	}
 
@@ -351,7 +361,7 @@ export default function customPlanMode(pi: ExtensionAPI): void {
 		return {
 			message: {
 				customType: "custom-plan-context",
-				content: buildPlanPrompt(bashUnrestricted),
+				content: buildPlanPrompt(activePlanTools(), bashUnrestricted),
 				display: false,
 			},
 		};
@@ -419,10 +429,13 @@ export default function customPlanMode(pi: ExtensionAPI): void {
 			planEnabled = stateEntry.data.enabled ?? planEnabled;
 			currentPlanFile = stateEntry.data.planFile ?? currentPlanFile;
 			bashUnrestricted = stateEntry.data.bashUnrestricted ?? bashUnrestricted;
+			prePlanTools = stateEntry.data.prePlanTools;
 		}
 
 		if (planEnabled) {
-			pi.setActiveTools(PLAN_TOOLS);
+			const allowed = new Set(PLAN_TOOLS);
+			const restoredTools = prePlanTools ?? pi.getActiveTools();
+			pi.setActiveTools(restoredTools.filter((name) => allowed.has(name)));
 		}
 		updateStatus(ctx);
 	});
@@ -430,12 +443,16 @@ export default function customPlanMode(pi: ExtensionAPI): void {
 
 // ── Plan mode system prompt ─────────────────────────────────────────────────
 
-function buildPlanPrompt(bashUnrestricted: boolean = false): string {
-	const tools = PLAN_TOOLS.join(", ");
+function buildPlanPrompt(
+	planTools: readonly string[],
+	bashUnrestricted: boolean = false,
+): string {
+	const tools = planTools.join(", ");
+	const canWritePlan = planTools.includes("write");
 
 	const bashRestrictionLine = bashUnrestricted
 		? "- Bash commands are unrestricted (running tests, build scripts, dev commands, etc. is allowed, but do NOT modify source code files directly)"
-		: "- Bash is restricted to read-only commands (ls, grep, git status, cat, find, rg, etc.)";
+		: "- Bash is restricted to read-only commands. Prefer rg for text search and fd for file discovery; grep and find remain available when needed.";
 
 	const lines = [
 		"[PLAN MODE ACTIVE]",
@@ -444,12 +461,14 @@ function buildPlanPrompt(bashUnrestricted: boolean = false): string {
 		"## Restrictions",
 		`- Available tools: ${tools}`,
 		bashRestrictionLine,
-		"- You CANNOT use: edit, write (except to the plans/ directory)",
+		canWritePlan
+			? "- You CANNOT use edit. You may write only to the plans/ directory."
+			: "- You cannot modify files.",
 		"- Do NOT attempt to make code changes — just plan.",
 		"",
 		"## Planning Process",
 		"",
-		"1. **Gather Context**: Use read-only tools to explore the codebase and understand the current state unless told otherwise. Read relevant files IN FULL to get complete context. Grep for related code, find similar patterns, understand the architecture.",
+		"1. **Gather Context**: Use read-only tools to explore the codebase and understand the current state unless told otherwise. Read relevant files IN FULL to get complete context. Prefer rg to search related code and fd to discover files; then find similar patterns and understand the architecture.",
 		"",
 		"2. **Ask Clarifying Questions**: Use ask_user to ask the user clarifying questions to better understand requirements, constraints, and preferences. Push back on weak assumptions and name trade-offs. Do not assume — ask.",
 		"",
@@ -457,7 +476,9 @@ function buildPlanPrompt(bashUnrestricted: boolean = false): string {
 		"",
 		"4. **Review with User**: Present the plan and ask if they are pleased with it or want changes. Think of this as a brainstorming session where you discuss and refine.",
 		"",
-		"5. **Save the Plan**: Save the final approved plan as a markdown file in the plans/ directory using the write tool. Use a descriptive kebab-case filename like plans/add-auth-middleware.md.",
+		canWritePlan
+			? "5. **Save the Plan**: Save the final approved plan as a markdown file in the plans/ directory. Use a descriptive kebab-case filename like plans/add-auth-middleware.md."
+			: "5. **Present the Plan**: Present the final approved plan in your response. File saving is unavailable in this loadout.",
 		"",
 		"## Plan File Guidelines",
 		"",

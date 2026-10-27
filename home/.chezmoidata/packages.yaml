@@ -91,6 +91,7 @@ packages:
       - iptables-nft
       - kdenlive
       - keepassxc
+      - kew
       - lact
       - libreoffice
       - mako
@@ -180,6 +181,7 @@ packages:
       - yalter/niri-git
       # Kitty is in Fedora's official repositories; no terminal COPR is needed.
       - lionheartp/Hyprland
+      - fed500/kew
     coprs_extras: []
     coprs_skip: []
 
@@ -256,8 +258,6 @@ packages:
       - libreoffice-fresh
       - libvirt
       - mako
-      - mpd
-      - mpd-mpris
       - mpv
       - niri
       - noto-fonts-emoji
@@ -268,7 +268,6 @@ packages:
       - pipewire-pulse
       - qemu-desktop
       - qt6-multimedia-ffmpeg
-      - rmpc
       - satty
       - slurp
       - swaybg

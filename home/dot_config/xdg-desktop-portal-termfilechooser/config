@@ -1,0 +1,6 @@
+[filechooser]
+cmd=yazi-wrapper.sh
+default_dir=$HOME/downloads
+env=TERMCMD='kitty --single-instance --wait-for-single-instance-window-close --class=dfr.floating.filechooser --override initial_window_width=150c --override initial_window_height=40c'
+open_mode=suggested
+save_mode=last

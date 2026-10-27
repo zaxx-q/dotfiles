@@ -110,7 +110,6 @@ services:
     - hd-idle.service
     - kanata.service
     - earlyoom.service
-    - mpd.service
     - greetd.service
   skip:
     - lactd.service
@@ -167,9 +166,6 @@ skip:
   targets:
     - .config/fastfetch/config.jsonc
     - .config/fontconfig/fonts.conf
-    - .config/mako
-    - .config/swayidle
-    - .config/waybar
   # System files that are not installed, see .chezmoiscripts/.
   system:
     - networkd-wait-online-timeout

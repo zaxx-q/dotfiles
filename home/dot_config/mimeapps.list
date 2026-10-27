@@ -146,6 +146,7 @@ application/xhtml+xml=zen-browser.desktop
 application/x-extension-xhtml=zen-browser.desktop
 application/x-extension-xht=zen-browser.desktop
 x-scheme-handler/stirlingpdf=Stirling-PDF-handler.desktop
+audio/x-opus+ogg=mpv.desktop
 
 [Added Associations]
 text/html=zen-browser.desktop;
@@ -154,3 +155,4 @@ image/svg+xml=imv.desktop;
 video/mp4=losslesscut.desktop;
 text/calendar=org.kde.kate.desktop;
 audio/x-mpegurl=org.kde.kate.desktop;
+audio/x-opus+ogg=mpv.desktop;

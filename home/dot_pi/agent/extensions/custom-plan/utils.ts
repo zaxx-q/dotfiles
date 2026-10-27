@@ -37,8 +37,20 @@ const DESTRUCTIVE_PATTERNS = [
 	/\bshutdown\b/i,
 	/\bsystemctl\s+(start|stop|restart|enable|disable)/i,
 	/\bservice\s+\S+\s+(start|stop|restart)/i,
-	/\b(vim?|nano|emacs|code|subl)\b/i,
+	// `vi` must be a command, not an option such as `grep -vi pattern`.
+	/(?:^|[;&|]\s*)vi(?:\s|$)/i,
+	/\b(vim|nano|emacs|code|subl)\b/i,
 ];
+
+// Discard output is read-only. Strip these redirects before testing for file
+// writes so commands such as `ls missing 2>/dev/null` remain usable.
+// Deliberately allow only the null device: redirects to every other path are
+// still rejected by the generic output-redirection pattern above.
+const NULL_DEVICE_REDIRECT = /(?:\d+)?>>?\s*\/dev\/null\b/g;
+
+function stripNullDeviceRedirects(command: string): string {
+	return command.replace(NULL_DEVICE_REDIRECT, "");
+}
 
 // Safe read-only commands allowed in plan mode
 const SAFE_PATTERNS = [
@@ -128,10 +140,15 @@ function stripRtk(cmd: string): string {
 }
 
 export function isSafeCommand(command: string): boolean {
-	// Check destructiveness on the raw command (rtk prefix doesn't hide intent)
+	// Check destructiveness on the command after removing harmless output
+	// redirects (rtk prefix doesn't hide intent).
 	const stripped = stripRtk(command);
+	const commandWithoutNullRedirects = stripNullDeviceRedirects(command);
+	const strippedWithoutNullRedirects = stripNullDeviceRedirects(stripped);
 	const isDestructive = DESTRUCTIVE_PATTERNS.some(
-		(p) => p.test(command) || p.test(stripped),
+		(p) =>
+			p.test(commandWithoutNullRedirects) ||
+			p.test(strippedWithoutNullRedirects),
 	);
 
 	let commandToCheck = commandAfterSafeCd(command) ?? command;
