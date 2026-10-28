@@ -101,7 +101,7 @@
     {
       "source": "npm:@ff-labs/pi-fff",
       "extensions": [
-        "-src/index.ts"
+        "+src/index.ts"
       ]
     },
     {
@@ -172,7 +172,7 @@
     {
       "source": "npm:billion-context-pi",
       "extensions": [
-        "+dist/index.js"
+        "-dist/index.js"
       ]
     }
   ],

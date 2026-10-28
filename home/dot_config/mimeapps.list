@@ -155,4 +155,4 @@ image/svg+xml=imv.desktop;
 video/mp4=losslesscut.desktop;
 text/calendar=org.kde.kate.desktop;
 audio/x-mpegurl=org.kde.kate.desktop;
-audio/x-opus+ogg=mpv.desktop;
+audio/x-opus+ogg=losslesscut.desktop;mpv.desktop;
