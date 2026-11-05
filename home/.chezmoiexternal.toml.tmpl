@@ -14,6 +14,45 @@
   [".config/tmux/plugins/tpm".pull]
     args = ["--ff-only"]
 
+# uosc: modern mpv on-screen controls.
+[".config/mpv/scripts/uosc"]
+  type = "archive"
+  url = "https://github.com/tomasklaen/uosc/releases/latest/download/uosc.zip"
+  stripComponents = 1
+  include = ["scripts/uosc/**"]
+  refreshPeriod = "168h"
+
+[".config/mpv/fonts"]
+  type = "archive"
+  url = "https://github.com/tomasklaen/uosc/releases/latest/download/uosc.zip"
+  stripComponents = 1
+  include = ["fonts/**"]
+  refreshPeriod = "168h"
+
+# thumbfast: thumbnail previews on the seek bar (pairs with uosc).
+[".config/mpv/scripts/thumbfast.lua"]
+  type = "file"
+  url = "https://raw.githubusercontent.com/po5/thumbfast/master/thumbfast.lua"
+  refreshPeriod = "168h"
+
+# selectformat: menu to pick stream quality/format for YouTube.
+[".config/mpv/scripts/selectformat.lua"]
+  type = "file"
+  url = "https://raw.githubusercontent.com/koonix/mpv-selectformat/master/selectformat.lua"
+  refreshPeriod = "168h"
+
+# nnedi3 upscaling shader.
+[".config/mpv/shaders/nnedi3-nns128-win8x4.hook"]
+  type = "file"
+  url = "https://raw.githubusercontent.com/bjin/mpv-prescalers/master/nnedi3-nns128-win8x4.hook"
+  refreshPeriod = "720h"
+
+# ArtCNN upscaling shader.
+[".config/mpv/shaders/ArtCNN_C4F32.glsl"]
+  type = "file"
+  url = "https://raw.githubusercontent.com/Artoriuz/ArtCNN/main/GLSL/ArtCNN_C4F32.glsl"
+  refreshPeriod = "720h"
+
 {{- /* Standalone scripts, replaces SCRIPTS_INSTALL. */ -}}
 {{- $skip := .external_scripts.skip -}}
 {{- $scripts := concat .external_scripts.default .external_scripts.extras -}}

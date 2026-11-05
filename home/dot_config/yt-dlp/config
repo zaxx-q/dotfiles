@@ -1,0 +1,49 @@
+# ──────────────────────────────────────────────────────────────────────
+# Output
+# ──────────────────────────────────────────────────────────────────────
+
+# Save into a yt-dlp directory under the videos dir. When downloading a
+# playlist, nest files inside a playlist subdirectory.
+-o "~/tmp/videos/yt-dlp/%(playlist|)s/%(playlist_index&{} - |)s%(title)s [%(id)s].%(ext)s"
+
+# ──────────────────────────────────────────────────────────────────────
+# Metadata
+# ──────────────────────────────────────────────────────────────────────
+
+# Embed everything useful into the downloaded file.
+--embed-thumbnail
+--embed-subs
+--embed-metadata
+--embed-chapters
+
+# Include English, Indonesian, and Japanese subtitles (auto-generated too).
+--sub-langs "en.*,id,ja"
+
+# ──────────────────────────────────────────────────────────────────────
+# SponsorBlock
+# ──────────────────────────────────────────────────────────────────────
+
+# Mark sponsor segments as chapters instead of skipping them. This is
+# non-destructive: you can see and skip them, but nothing is cut.
+--sponsorblock-mark all
+--sponsorblock-chapter-title "SponsorBlock: %(category_names)l"
+
+# ──────────────────────────────────────────────────────────────────────
+# Downloader
+# ──────────────────────────────────────────────────────────────────────
+
+# Use aria2c for parallel connections (faster downloads).
+--downloader aria2c
+--downloader-args "aria2c:-c -x6"
+
+# ──────────────────────────────────────────────────────────────────────
+# Aliases
+# ──────────────────────────────────────────────────────────────────────
+# Usage: yt-dlp video URL, yt-dlp audio URL, etc.
+
+--alias video   "-S res,vcodec:h264,acodec:aac --merge-output-format mkv --remux-video mkv"
+--alias video1080p "-S res:1080,vcodec:h264,acodec:aac --merge-output-format mkv --remux-video mkv"
+--alias video720p  "-S res:720,vcodec:h264,acodec:aac --merge-output-format mkv --remux-video mkv"
+--alias audio   "-x --audio-format mp3 --audio-quality 0"
+
+# vim: filetype=conf

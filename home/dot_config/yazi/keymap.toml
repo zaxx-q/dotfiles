@@ -1,0 +1,5 @@
+[mgr]
+prepend_keymap = [
+	{ on = "<A-d>", run = '''shell -- ripdrag --no-click --and-exit --icon-size 64 --target --all %s | while read -r filepath; do cp -nR "$filepath" .; done''', desc = "Drag-and-drop (no overwrite)" },
+	{ on = "<A-D>", run = '''shell -- ripdrag --no-click --and-exit --icon-size 64 --target --all %s | while read -r filepath; do cp -fR "$filepath" .; done''', desc = "Drag-and-drop (overwrite)" },
+]

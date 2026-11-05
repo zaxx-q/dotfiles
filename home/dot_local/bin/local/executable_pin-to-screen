@@ -119,6 +119,8 @@ def capture_region_noctalia() -> tuple[str | None, int | None, int | None]:
         [
             "noctalia", "msg", "screenshot-region",
             "--freeze-screen",
+            "--no-confirm-region",
+            "--no-remember-last-region",
             "--no-annotate",
             "--no-copy-to-clipboard",
             "--save-to-file",

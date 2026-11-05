@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "1.4.0",
+  "lastChangelogVersion": "1.5.0",
   "npmCommand": [
     "bun"
   ],
@@ -79,7 +79,8 @@
     {
       "source": "npm:pi-interactive-shell",
       "skills": [
-        "-skills/pi-interactive-shell/SKILL.md"
+        "-skills/pi-interactive-shell/SKILL.md",
+        "-skills/interactive-shell/SKILL.md"
       ],
       "extensions": [
         "-index.ts"
@@ -172,9 +173,10 @@
     {
       "source": "npm:billion-context-pi",
       "extensions": [
-        "-dist/index.js"
+        "+dist/index.js"
       ]
-    }
+    },
+    "npm:pi-model-system-prompt"
   ],
   "theme": "noctalia",
   "extensions": [
@@ -201,5 +203,13 @@
   "hideThinkingBlock": false,
   "defaultProvider": "cliproxyapi",
   "defaultModel": "gpt-6-luna",
-  "transport": "websocket-cached"
+  "transport": "websocket-cached",
+  "extensionChangelogVersions": {
+    "{\"source\":\"npm:pi-boomerang\",\"scope\":\"user\"}": "0.7.0",
+    "{\"source\":\"npm:pi-mono-multi-edit\",\"scope\":\"user\"}": "2.0.0",
+    "{\"source\":\"npm:@dreki-gg/pi-modes\",\"scope\":\"user\"}": "0.1.4",
+    "{\"source\":\"npm:@gotgenes/pi-subagents\",\"scope\":\"user\"}": "25.0.5",
+    "{\"source\":\"npm:@gotgenes/pi-autoformat\",\"scope\":\"user\"}": "5.1.11",
+    "{\"source\":\"npm:@narumitw/pi-starship\",\"scope\":\"user\"}": "0.65.2"
+  }
 }

@@ -70,3 +70,5 @@
 .config/zsh/.zsh_history*
 .config/zsh/.zsh_plugins.zsh
 .config/zsh/.aliases.local
+.config/yazi/flavors
+.config/Thunar/renamerrc

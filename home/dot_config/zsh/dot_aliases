@@ -26,13 +26,13 @@ alias drun='docker container run --rm -it -v "${PWD}":/app -w /app'
 
 alias k="kubectl"
 alias tf="terraform"
-alias ymp3="yt-dlp --embed-metadata --extract-audio --audio-format mp3"
+alias ymp3="yt-dlp audio"
 
 # A way to define and run tasks in a project. It's like make except it's pure
 # Bash so there's no make limitations like not being able to forward arguments.
 alias run=./run
 
-alias rg="rg --hidden --glob '!.git/*' --hyperlink-format='file://{path}:{line}:{column}' --color=always --smart-case --heading --line-number --sort=path"
+alias rg="rg --hidden --glob '!.git/*' --hyperlink-format=kitty --color=always --smart-case --heading --line-number --sort=path"
 
 alias grok="grok --disable-web-search"
 
@@ -40,4 +40,8 @@ alias azan="mise x node -- azaan"
 
 alias chargethreshold="busctl call org.freedesktop.UPower /org/freedesktop/UPower/devices/battery_BAT0 org.freedesktop.UPower.Device EnableChargeThreshold b true"
 
-alias plan='cd /drive/share/Planner && pi'
+alias plan='cd /drive/share/agents/Planner && pi'
+alias workshop='cd /drive/share/agents/Workshop && pi'
+
+# SSH with kitty
+[ "$TERM" = "xterm-kitty" ] && alias ssh="kitty +kitten ssh"
