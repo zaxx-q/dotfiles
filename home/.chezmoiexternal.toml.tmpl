@@ -18,7 +18,7 @@
 [".config/mpv/scripts/uosc"]
   type = "archive"
   url = "https://github.com/tomasklaen/uosc/releases/latest/download/uosc.zip"
-  stripComponents = 1
+  stripComponents = 2
   include = ["scripts/uosc/**"]
   refreshPeriod = "168h"
 
@@ -27,6 +27,21 @@
   url = "https://github.com/tomasklaen/uosc/releases/latest/download/uosc.zip"
   stripComponents = 1
   include = ["fonts/**"]
+  refreshPeriod = "168h"
+
+# mpv-mpris2: MPRIS v2 D-Bus interface for mpv (media keys, playerctl, desktop integration).
+# Extracts the static binary; mpv auto-loads it via the .run extension.
+[".config/mpv/scripts/mpris.run"]
+  type = "archive-file"
+  url = "https://github.com/eNV25/mpv-mpris2/releases/latest/download/mpv-mpris2-x86_64-unknown-linux-musl.tar.zst"
+  path = "mpv-mpris2-x86_64-unknown-linux-musl/mpv-mpris2"
+  refreshPeriod = "168h"
+  executable = true
+
+# sponsorblock-minimal: mark/skip sponsor segments in YouTube videos.
+[".config/mpv/scripts/sponsorblock_minimal.lua"]
+  type = "file"
+  url = "https://codeberg.org/jouni/mpv_sponsorblock_minimal/raw/branch/master/sponsorblock_minimal.lua"
   refreshPeriod = "168h"
 
 # thumbfast: thumbnail previews on the seek bar (pairs with uosc).

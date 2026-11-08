@@ -32,6 +32,9 @@
 # Downloader
 # ──────────────────────────────────────────────────────────────────────
 
+# Allow yt-dlp to download external JS challenge solver components
+--remote-components ejs:github
+
 # Use aria2c for parallel connections (faster downloads).
 --downloader aria2c
 --downloader-args "aria2c:-c -x6"
@@ -39,11 +42,11 @@
 # ──────────────────────────────────────────────────────────────────────
 # Aliases
 # ──────────────────────────────────────────────────────────────────────
-# Usage: yt-dlp video URL, yt-dlp audio URL, etc.
+# Usage: yt-dlp --video URL, yt-dlp --audio URL, etc.
 
 --alias video   "-S res,vcodec:h264,acodec:aac --merge-output-format mkv --remux-video mkv"
 --alias video1080p "-S res:1080,vcodec:h264,acodec:aac --merge-output-format mkv --remux-video mkv"
 --alias video720p  "-S res:720,vcodec:h264,acodec:aac --merge-output-format mkv --remux-video mkv"
---alias audio   "-x --audio-format mp3 --audio-quality 0"
+--alias audio   "-x --audio-format opus --audio-quality 0"
 
 # vim: filetype=conf

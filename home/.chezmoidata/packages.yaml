@@ -85,6 +85,7 @@ packages:
       - libqalculate
       - qalculate
       - firefox
+      - fsearch
       - kitty
       - grim
       - hyprpicker
@@ -182,6 +183,7 @@ packages:
       # Kitty is in Fedora's official repositories; no terminal COPR is needed.
       - lionheartp/Hyprland
       - fed500/kew
+      - cboxdoerfer/fsearch
     coprs_extras: []
     coprs_skip: []
 
