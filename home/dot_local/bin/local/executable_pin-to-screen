@@ -10,11 +10,10 @@ Usage:
 
 Controls:
     Left-drag        Move the pinned image
+    Double-click     Copy image back to clipboard
     Scroll           Resize (preserves aspect ratio)
     Middle-click     Close this pin
     Right-click      Toggle transparency (100% / 40%)
-    Ctrl+C           Copy image back to clipboard
-    Escape / Q       Close (when focused)
 
 Dependencies: grim, slurp, wl-copy, python3-gobject, gtk4, gtk4-layer-shell,
               python3-pillow (for region crop)
@@ -312,6 +311,12 @@ def show_pin(image_path: str, spawn_x: int | None, spawn_y: int | None,
             drag.connect("drag-end", self._on_drag_end)
             self.add_controller(drag)
 
+            # Double-click to copy to clipboard
+            double_click = Gtk.GestureClick()
+            double_click.set_button(1)
+            double_click.connect("pressed", self._on_double_click)
+            self.add_controller(double_click)
+
             # Middle-click to close
             mid_click = Gtk.GestureClick()
             mid_click.set_button(2)
@@ -330,11 +335,6 @@ def show_pin(image_path: str, spawn_x: int | None, spawn_y: int | None,
             )
             scroll.connect("scroll", self._on_scroll)
             self.add_controller(scroll)
-
-            # Keyboard shortcuts
-            key = Gtk.EventControllerKey()
-            key.connect("key-pressed", self._on_key)
-            self.add_controller(key)
 
         # --- Drawing ---
 
@@ -403,6 +403,12 @@ def show_pin(image_path: str, spawn_x: int | None, spawn_y: int | None,
 
         # --- Actions ---
 
+        def _on_double_click(
+            self, gesture: Gtk.GestureClick, n_press: int, x: float, y: float
+        ) -> None:
+            if n_press == 2:
+                self._copy_to_clipboard()
+
         def _on_right_click(
             self, gesture: Gtk.GestureClick, n_press: int, x: float, y: float
         ) -> None:
@@ -435,21 +441,6 @@ def show_pin(image_path: str, spawn_x: int | None, spawn_y: int | None,
                     )
             except OSError as e:
                 print(f"Failed to copy to clipboard: {e}", file=sys.stderr)
-
-        def _on_key(
-            self,
-            controller: Gtk.EventControllerKey,
-            keyval: int,
-            keycode: int,
-            state: Gdk.ModifierType,
-        ) -> bool:
-            if keyval in (Gdk.KEY_Escape, Gdk.KEY_q):
-                self.close()
-                return True
-            if keyval in (Gdk.KEY_c, Gdk.KEY_C) and (state & Gdk.ModifierType.CONTROL_MASK):
-                self._copy_to_clipboard()
-                return True
-            return False
 
     # --- Run the app ---
 

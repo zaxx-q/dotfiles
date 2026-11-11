@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "rea": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": [
+        "rea-agents@6.8.0",
+        "mcp"
+      ],
+      "enabled": false
+    }
+  }
+}

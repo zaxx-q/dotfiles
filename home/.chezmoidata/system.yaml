@@ -20,11 +20,13 @@ mise:
     - node
     - python
   # CLI tools that mise installs (`mise use --global`), per distro. They're
-  # empty everywhere except Debian, where these tools aren't packaged.
+  # used on Debian (where tools aren't packaged) and Fedora (e.g. shfmt,
+  # which was retired from Fedora 45 repos).
   arch: []
   arch_extras: []
   arch_skip: []
-  fedora: []
+  fedora:
+    - shfmt
   fedora_extras: []
   fedora_skip: []
   darwin: []

@@ -662,7 +662,7 @@ binds {
     Mod+Alt+Minus     hotkey-overlay-title="Decrease window height" { set-window-height "-10%"; }
 
     // #"Focus"
-    // Mod+Slash  hotkey-overlay-title="Search keyboard shortcuts" { spawn "niri-keybinds"; }
+    Mod+Slash  hotkey-overlay-title="Search keyboard shortcuts" { spawn "niri-keybinds"; }
     // Mod+O      repeat=false hotkey-overlay-title="Toggle overview (4-finger swipe)" { toggle-overview; }
     Mod+Tab    hotkey-overlay-title="Toggle overview (4-finger swipe)" repeat=false { toggle-overview; }
     // Mod+I      hotkey-overlay-title="Focus previously focused window" { focus-window-previous; } (use alt tab instead)

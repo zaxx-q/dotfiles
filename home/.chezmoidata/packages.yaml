@@ -51,7 +51,6 @@ packages:
       - ripgrep
       - rsync
       - ShellCheck
-      - shfmt
       - smartmontools
       - strace
       - tmux

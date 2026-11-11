@@ -24,24 +24,32 @@ EXCLUDES=(
 FORCE=false
 EXTRA_FLAGS=()
 
-for arg in "$@"; do
-  case "$arg" in
+while [ $# -gt 0 ]; do
+  case "$1" in
   --force | -f)
     FORCE=true
+    EXTRA_FLAGS+=(--force)
+    shift
     ;;
   --help | -h)
     echo "Usage: $(basename "$0") [options] [-- rclone_flags]"
     echo ""
     echo "Options:"
     echo "  --resync       Perform initial or recovery resync"
-    echo "  --force, -f    Skip battery and metered network checks"
+    echo "  --force, -f    Skip battery/metered checks and pass --force to rclone bisync"
     echo "  --help, -h     Show this help message"
     echo ""
     echo "Any additional flags (e.g. --dry-run, -v) are passed directly to rclone bisync."
     exit 0
     ;;
+  --)
+    shift
+    EXTRA_FLAGS+=("$@")
+    break
+    ;;
   *)
-    EXTRA_FLAGS+=("$arg")
+    EXTRA_FLAGS+=("$1")
+    shift
     ;;
   esac
 done

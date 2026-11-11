@@ -79,13 +79,13 @@ shell, groups and desktop session are picked up. To look before you leap, run
 
 ## How it fits together
 
-| What | Where |
-| :-- | :-- |
-| **Source**: this repo, the desired state | `~/.local/share/chezmoi` (chezmoi's own files are in its `home/` folder, see `.chezmoiroot`) |
-| **Destination**: the real thing | your home directory, `~` |
-| **Config**: this machine's answers and overrides, never in git | `~/.config/chezmoi/chezmoi.toml` |
-| **State**: which scripts already ran, and what chezmoi last wrote | `~/.config/chezmoi/chezmoistate.boltdb` |
-| **Cache**: downloaded externals (tpm, ...) | `~/.cache/chezmoi` |
+| What                                                              | Where                                                                                        |
+| :---------------------------------------------------------------- | :------------------------------------------------------------------------------------------- |
+| **Source**: this repo, the desired state                          | `~/.local/share/chezmoi` (chezmoi's own files are in its `home/` folder, see `.chezmoiroot`) |
+| **Destination**: the real thing                                   | your home directory, `~`                                                                     |
+| **Config**: this machine's answers and overrides, never in git    | `~/.config/chezmoi/chezmoi.toml`                                                             |
+| **State**: which scripts already ran, and what chezmoi last wrote | `~/.config/chezmoi/chezmoistate.boltdb`                                                      |
+| **Cache**: downloaded externals (tpm, ...)                        | `~/.cache/chezmoi`                                                                           |
 
 `chezmoi apply` makes the destination match the source. It never copies in the
 other direction by itself. When you change something in `~` (or an app does),
@@ -93,14 +93,14 @@ you take it into the repo yourself with `chezmoi re-add` or `chezmoi add`.
 
 Source file names say what a file becomes. The ones this repo uses:
 
-| In the repo | In `~` |
-| :-- | :-- |
-| `dot_config/git/config` | `~/.config/git/config` (`dot_` becomes `.`) |
-| `executable_foo` | `foo`, mode 755 |
-| `dot_config/private_gnupg` | `~/.config/gnupg`, mode 700 (files 600) |
+| In the repo                | In `~`                                                |
+| :------------------------- | :---------------------------------------------------- |
+| `dot_config/git/config`    | `~/.config/git/config` (`dot_` becomes `.`)           |
+| `executable_foo`           | `foo`, mode 755                                       |
+| `dot_config/private_gnupg` | `~/.config/gnupg`, mode 700 (files 600)               |
 | `create_config.local.tmpl` | created once if missing, never overwritten afterwards |
-| `symlink_foo.tmpl` | a symlink, the file's content is the link target |
-| `foo.tmpl` | `foo`, after the Go template inside is rendered |
+| `symlink_foo.tmpl`         | a symlink, the file's content is the link target      |
+| `foo.tmpl`                 | `foo`, after the Go template inside is rendered       |
 
 Prefixes can be combined, in a fixed order (see the
 [naming reference](https://www.chezmoi.io/reference/source-state-attributes/)).
@@ -171,48 +171,48 @@ chezmoi apply
 
 Set up and sync:
 
-| Command | What it does |
-| :-- | :-- |
-| `chezmoi init <user/repo>` | Clone the repo, ask the questions, write the config |
-| `chezmoi init --apply <user/repo>` | The same, then apply |
-| `chezmoi init --prompt` | Ask the questions again, with the current config in place |
-| `chezmoi apply` | Make `~` match the repo |
-| `chezmoi apply -n -v` | Dry run, shows what it would do |
-| `chezmoi apply --exclude scripts` | Write files only, skip the install scripts |
-| `chezmoi apply <target>` | Apply one file or directory |
-| `chezmoi apply --refresh-externals` | Download tpm and other externals again |
-| `chezmoi update` | `git pull --rebase`, then apply |
-| `chezmoi upgrade` | Upgrade chezmoi itself (when installed with the script) |
+| Command                             | What it does                                              |
+| :---------------------------------- | :-------------------------------------------------------- |
+| `chezmoi init <user/repo>`          | Clone the repo, ask the questions, write the config       |
+| `chezmoi init --apply <user/repo>`  | The same, then apply                                      |
+| `chezmoi init --prompt`             | Ask the questions again, with the current config in place |
+| `chezmoi apply`                     | Make `~` match the repo                                   |
+| `chezmoi apply -n -v`               | Dry run, shows what it would do                           |
+| `chezmoi apply --exclude scripts`   | Write files only, skip the install scripts                |
+| `chezmoi apply <target>`            | Apply one file or directory                               |
+| `chezmoi apply --refresh-externals` | Download tpm and other externals again                    |
+| `chezmoi update`                    | `git pull --rebase`, then apply                           |
+| `chezmoi upgrade`                   | Upgrade chezmoi itself (when installed with the script)   |
 
 Look:
 
-| Command | What it does |
-| :-- | :-- |
-| `chezmoi status` | One line per file that differs, like `git status` |
-| `chezmoi diff` | The differences, and the scripts that would run |
-| `chezmoi verify` | Exit code 0 when `~` matches the repo |
-| `chezmoi managed` | Everything chezmoi manages (`-i files` to narrow it) |
-| `chezmoi unmanaged [dir]` | Files in `~` that aren't tracked |
-| `chezmoi ignored` | Targets this machine skips (`.chezmoiignore`) |
-| `chezmoi cat <target>` | A file as chezmoi would write it |
-| `chezmoi data` | The template data for this machine |
-| `chezmoi source-path [target]` | Where the repo (or a file's source) is |
-| `chezmoi doctor` | Checks the setup |
+| Command                        | What it does                                         |
+| :----------------------------- | :--------------------------------------------------- |
+| `chezmoi status`               | One line per file that differs, like `git status`    |
+| `chezmoi diff`                 | The differences, and the scripts that would run      |
+| `chezmoi verify`               | Exit code 0 when `~` matches the repo                |
+| `chezmoi managed`              | Everything chezmoi manages (`-i files` to narrow it) |
+| `chezmoi unmanaged [dir]`      | Files in `~` that aren't tracked                     |
+| `chezmoi ignored`              | Targets this machine skips (`.chezmoiignore`)        |
+| `chezmoi cat <target>`         | A file as chezmoi would write it                     |
+| `chezmoi data`                 | The template data for this machine                   |
+| `chezmoi source-path [target]` | Where the repo (or a file's source) is               |
+| `chezmoi doctor`               | Checks the setup                                     |
 
 Change:
 
-| Command | What it does |
-| :-- | :-- |
-| `chezmoi edit <target>` | Edit the repo's copy of a file (`--apply`, `--watch`) |
-| `chezmoi edit-config` | Edit `~/.config/chezmoi/chezmoi.toml` |
-| `chezmoi cd` | A shell inside the repo (`exit` to leave) |
-| `chezmoi git -- <args>` | Run git in the repo |
-| `chezmoi add <path>` | Start tracking a file or directory (`--template`) |
-| `chezmoi re-add` | Take changed files from `~` into the repo, not templates |
-| `chezmoi merge <target>` | Merge the file in `~` with the repo's version in your merge tool, for templates |
-| `chezmoi forget <target>` | Stop tracking, keep the file |
-| `chezmoi execute-template '{{ .distro }}'` | Try a template expression |
-| `chezmoi state delete-bucket --bucket=scriptState` | Make every script run again at the next apply |
+| Command                                            | What it does                                                                    |
+| :------------------------------------------------- | :------------------------------------------------------------------------------ |
+| `chezmoi edit <target>`                            | Edit the repo's copy of a file (`--apply`, `--watch`)                           |
+| `chezmoi edit-config`                              | Edit `~/.config/chezmoi/chezmoi.toml`                                           |
+| `chezmoi cd`                                       | A shell inside the repo (`exit` to leave)                                       |
+| `chezmoi git -- <args>`                            | Run git in the repo                                                             |
+| `chezmoi add <path>`                               | Start tracking a file or directory (`--template`)                               |
+| `chezmoi re-add`                                   | Take changed files from `~` into the repo, not templates                        |
+| `chezmoi merge <target>`                           | Merge the file in `~` with the repo's version in your merge tool, for templates |
+| `chezmoi forget <target>`                          | Stop tracking, keep the file                                                    |
+| `chezmoi execute-template '{{ .distro }}'`         | Try a template expression                                                       |
+| `chezmoi state delete-bucket --bucket=scriptState` | Make every script run again at the next apply                                   |
 
 Handy flags: `-n` dry run, `-v` verbose, `--force` no prompts, `-i` / `-x`
 include or exclude entry types (`files`, `dirs`, `symlinks`, `scripts`,
@@ -224,12 +224,12 @@ Most files are real files now, including the ones outside of `~` (`/etc/dnf/dnf.
 keyd's config, ...). Nothing links into the repo. Symlinks are still used where
 a link is the point:
 
-| Link | Points to | Why |
-| :-- | :-- | :-- |
-| `~/.XCompose` | `~/.config/XCompose` | Programs look in `~/.XCompose`, the file is kept in `~/.config` |
-| `~/.local/bin/local/{node,npm,pnpm,yarn}` | `~/.local/share/mise/installs/bun/latest/bin/bun` | bun stands in for node and its package managers |
-| `~/.local/bin/local/npx` | `.../bun/latest/bin/bunx` | Same, for `npx` |
-| `/etc/resolv.conf` | `/run/systemd/resolve/stub-resolv.conf` | systemd-resolved. Made by a script, with `sudo`, on Arch and Fedora outside WSL and containers |
+| Link                                      | Points to                                         | Why                                                                                            |
+| :---------------------------------------- | :------------------------------------------------ | :--------------------------------------------------------------------------------------------- |
+| `~/.XCompose`                             | `~/.config/XCompose`                              | Programs look in `~/.XCompose`, the file is kept in `~/.config`                                |
+| `~/.local/bin/local/{node,npm,pnpm,yarn}` | `~/.local/share/mise/installs/bun/latest/bin/bun` | bun stands in for node and its package managers                                                |
+| `~/.local/bin/local/npx`                  | `.../bun/latest/bin/bunx`                         | Same, for `npx`                                                                                |
+| `/etc/resolv.conf`                        | `/run/systemd/resolve/stub-resolv.conf`           | systemd-resolved. Made by a script, with `sudo`, on Arch and Fedora outside WSL and containers |
 
 The bun links are chezmoi `symlink_` entries. They show up as dangling until
 the mise script has installed bun, which is fine. `~/.XCompose` is one too.
@@ -243,12 +243,12 @@ chezmoi only manages `~`, so files such as `/etc/greetd/config.toml` live in
 script copies them with `sudo`. Everything in `home/.system/files/<scope>/` is
 installed to the same path under `/`:
 
-| Folder | Installed on |
-| :-- | :-- |
-| `files/all/` | every Linux machine |
-| `files/gui/` | machines with the desktop (`gui = true`) |
-| `files/fedora/`, `files/arch/`, `files/debian/` | that distro |
-| `files/fedora-gui/`, `files/arch-gui/`, `files/debian-gui/` | that distro, with the desktop |
+| Folder                                                      | Installed on                             |
+| :---------------------------------------------------------- | :--------------------------------------- |
+| `files/all/`                                                | every Linux machine                      |
+| `files/gui/`                                                | machines with the desktop (`gui = true`) |
+| `files/fedora/`, `files/arch/`, `files/debian/`             | that distro                              |
+| `files/fedora-gui/`, `files/arch-gui/`, `files/debian-gui/` | that distro, with the desktop            |
 
 So `home/.system/files/fedora-gui/etc/greetd/config.toml` ends up as
 `/etc/greetd/config.toml` on a Fedora desktop. A file that is executable in the
@@ -278,19 +278,19 @@ the niri session, WSL) are still listed by hand in the script instead.
 
 ## What's in the repo
 
-| Path | What it is |
-| :-- | :-- |
-| `home/` | The chezmoi source (`.chezmoiroot` points here) |
-| `home/dot_*`, `home/private_*`, `home/executable_*`, ... | Files for `~`, with chezmoi's [naming](https://www.chezmoi.io/reference/source-state-attributes/) |
-| `home/.chezmoi.toml.tmpl` | Detects the machine and asks the `init` questions |
-| `home/.chezmoidata/` | Settings: packages, mise, fonts, services, skip lists |
-| `home/.chezmoiignore` | Which targets a machine doesn't get (desktop-less, skipped, ...) |
-| `home/.chezmoiexternal.toml.tmpl` | Things chezmoi downloads (tpm, scripts from GitHub) |
-| `home/.chezmoiscripts/` | The install scripts |
-| `home/.chezmoitemplates/` | Shared bits for the scripts (shell prelude, package lists) |
-| `home/.system/` | Files that go outside of `~`, copied by a script. `files/<scope>/` is installed to `/` automatically, see [System files](#system-files) |
-| `_docs/` | Notes on the package lists and the optional scripts, plus a one-off helper that moved a machine off an old symlink based setup |
-| `run` | Lint and format helper, also what CI runs |
+| Path                                                     | What it is                                                                                                                              |
+| :------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
+| `home/`                                                  | The chezmoi source (`.chezmoiroot` points here)                                                                                         |
+| `home/dot_*`, `home/private_*`, `home/executable_*`, ... | Files for `~`, with chezmoi's [naming](https://www.chezmoi.io/reference/source-state-attributes/)                                       |
+| `home/.chezmoi.toml.tmpl`                                | Detects the machine and asks the `init` questions                                                                                       |
+| `home/.chezmoidata/`                                     | Settings: packages, mise, fonts, services, skip lists                                                                                   |
+| `home/.chezmoiignore`                                    | Which targets a machine doesn't get (desktop-less, skipped, ...)                                                                        |
+| `home/.chezmoiexternal.toml.tmpl`                        | Things chezmoi downloads (tpm, scripts from GitHub)                                                                                     |
+| `home/.chezmoiscripts/`                                  | The install scripts                                                                                                                     |
+| `home/.chezmoitemplates/`                                | Shared bits for the scripts (shell prelude, package lists)                                                                              |
+| `home/.system/`                                          | Files that go outside of `~`, copied by a script. `files/<scope>/` is installed to `/` automatically, see [System files](#system-files) |
+| `_docs/`                                                 | Notes on the package lists and the optional scripts, plus a one-off helper that moved a machine off an old symlink based setup          |
+| `run`                                                    | Lint and format helper, also what CI runs                                                                                               |
 
 Only `dot_config/zsh/dot_xdg.local.tmpl` and a few other `*.tmpl` configs that
 need your home directory or your machine's facts are templates. Everything else
@@ -371,20 +371,20 @@ when their rendered content changes, which includes the package lists or files
 they depend on. To force them all to run again, see
 [Day to day workflow](#day-to-day-workflow).
 
-| Script | Does |
-| :-- | :-- |
-| `before_00-create-dirs` | Creates the directories programs expect |
+| Script                       | Does                                                                                                                          |
+| :--------------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
+| `before_00-create-dirs`      | Creates the directories programs expect                                                                                       |
 | `before_10-install-packages` | Packages for Fedora, Arch (pacman + AUR), Debian and macOS, GPU / Wi-Fi / Bluetooth detection, RPM Fusion, Terra, COPRs, mise |
-| `after_10-system-files` | `/etc` and `/usr/share` files from `home/.system/` (all of `files/<scope>/`), resolv.conf, WSL files, masked units |
-| `after_20-sudoers-udev` | sudoers.d entries (checked with `visudo`) and udev rules, if any are set |
-| `after_21-services-groups` | Enables services and adds you to `docker` / `libvirt` (desktop only) |
-| `after_22-docker-desktop` | `pass init` for Docker Desktop, only if you added that package |
-| `after_30-mise` | Languages (and Debian CLI tools) with `mise use --global` |
-| `after_31-fonts` | Downloads the fonts from `fonts.*` |
-| `after_32-tmux-plugins` | `tpm` plugins, runs when `tmux.conf` changes |
-| `after_33-zsh-plugins` | antidote and the zsh plugins, runs when `.zsh_plugins.txt` changes |
-| `after_40-default-shell` | Adds zsh to `/etc/shells` and runs `chsh` |
-| `once_after_41` / `42` | SSH key and GPG key, only if you don't have them |
+| `after_10-system-files`      | `/etc` and `/usr/share` files from `home/.system/` (all of `files/<scope>/`), resolv.conf, WSL files, masked units            |
+| `after_20-sudoers-udev`      | sudoers.d entries (checked with `visudo`) and udev rules, if any are set                                                      |
+| `after_21-services-groups`   | Enables services and adds you to `docker` / `libvirt` (desktop only)                                                          |
+| `after_22-docker-desktop`    | `pass init` for Docker Desktop, only if you added that package                                                                |
+| `after_30-mise`              | Languages (and Debian CLI tools) with `mise use --global`                                                                     |
+| `after_31-fonts`             | Downloads the fonts from `fonts.*`                                                                                            |
+| `after_32-tmux-plugins`      | `tpm` plugins, runs when `tmux.conf` changes                                                                                  |
+| `after_33-zsh-plugins`       | antidote and the zsh plugins, runs when `.zsh_plugins.txt` changes                                                            |
+| `after_40-default-shell`     | Adds zsh to `/etc/shells` and runs `chsh`                                                                                     |
+| `once_after_41` / `42`       | SSH key and GPG key, only if you don't have them                                                                              |
 
 chezmoi downloads `tpm` and the scripts in `external_scripts` itself, see
 `.chezmoiexternal.toml.tmpl`. Refresh them with `chezmoi apply --refresh-externals`.
@@ -441,8 +441,8 @@ hasn't created it yet.
 
 CI (`.github/workflows/ci.yml`) runs `./run ci:test` on pushes to `main`, on pull
 requests and on demand from the Actions tab. `./run format` needs a recent
-`shfmt`: Fedora's package (3.7) is too old for the `.editorconfig`, so use
-`mise exec shfmt@3.14.1 -- ./run format`.
+`shfmt`: on Fedora (where `shfmt` was retired in Fedora 45) and Debian, it is
+installed via `mise` (`mise use --global shfmt`).
 
 ## Credits
 

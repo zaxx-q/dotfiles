@@ -19,12 +19,6 @@
         "-dist/index.ts"
       ]
     },
-    {
-      "source": "npm:@narumitw/pi-firecrawl",
-      "extensions": [
-        "+src/index.ts"
-      ]
-    },
     "npm:pi-boomerang",
     {
       "source": "npm:pi-smart-fetch",
@@ -38,7 +32,13 @@
         "-skills/btw/SKILL.md"
       ]
     },
-    "npm:pi-mono-multi-edit",
+    {
+      "source": "npm:pi-mono-multi-edit",
+      "extensions": [
+        "-index.ts",
+        "-./index.ts"
+      ]
+    },
     "npm:@dreki-gg/pi-modes",
     "npm:pi-qq",
     {
@@ -63,7 +63,12 @@
         "+skills/claude-md-revision/SKILL.md"
       ]
     },
-    "npm:@mrclrchtr/supi-context",
+    {
+      "source": "npm:@mrclrchtr/supi-context",
+      "extensions": [
+        "-src/extension.ts"
+      ]
+    },
     {
       "source": "npm:@jerryan/pi-todo-lite",
       "extensions": [
@@ -102,23 +107,11 @@
     {
       "source": "npm:@ff-labs/pi-fff",
       "extensions": [
-        "+src/index.ts"
+        "-src/index.ts"
       ]
     },
     {
       "source": "npm:@gotgenes/pi-permission-system",
-      "extensions": [
-        "-src/index.ts"
-      ]
-    },
-    {
-      "source": "npm:@tintinweb/pi-subagents",
-      "extensions": [
-        "-src/index.ts"
-      ]
-    },
-    {
-      "source": "npm:@gotgenes/pi-subagents",
       "extensions": [
         "-src/index.ts"
       ]
@@ -155,13 +148,18 @@
         "-SKILL.md"
       ]
     },
-    "npm:@xynogen/pix-optimizer",
+    {
+      "source": "npm:@xynogen/pix-optimizer",
+      "extensions": [
+        "-src/index.ts"
+      ]
+    },
     "npm:@palmtom/pi-models",
     {
       "source": "npm:@router-for-me/pi-cliproxyapi-provider",
       "extensions": [
-        "+extensions/index.ts",
-        "+extensions/tps.ts"
+        "+extensions/tps.ts",
+        "+extensions/index.ts"
       ]
     },
     {
@@ -170,13 +168,17 @@
         "-extensions/index.ts"
       ]
     },
+    "npm:pi-model-system-prompt",
+    "npm:pi-context-view",
+    "npm:billion-context-pi-lean",
     {
-      "source": "npm:billion-context-pi",
+      "source": "npm:@ssk_dev/pi-subagents-lean",
       "extensions": [
-        "+dist/index.js"
+        "-index.ts"
       ]
     },
-    "npm:pi-model-system-prompt"
+    "npm:pi-web-access",
+    "npm:@ssk_dev/pi-docs-slim"
   ],
   "theme": "noctalia",
   "extensions": [
@@ -188,7 +190,8 @@
     "+extensions/env-loader.ts",
     "-extensions/tps-tracker.ts",
     "+extensions/environment-details.ts",
-    "+extensions/resilient-retry.ts"
+    "+extensions/resilient-retry.ts",
+    "-extensions/context-guard/index.ts"
   ],
   "defaultThinkingLevel": "high",
   "defaultTools": [
@@ -202,7 +205,7 @@
   },
   "hideThinkingBlock": false,
   "defaultProvider": "cliproxyapi",
-  "defaultModel": "gpt-6-luna",
+  "defaultModel": "gemini-3.8-flash-high",
   "transport": "websocket-cached",
   "extensionChangelogVersions": {
     "{\"source\":\"npm:pi-boomerang\",\"scope\":\"user\"}": "0.7.0",
@@ -210,6 +213,10 @@
     "{\"source\":\"npm:@dreki-gg/pi-modes\",\"scope\":\"user\"}": "0.1.4",
     "{\"source\":\"npm:@gotgenes/pi-subagents\",\"scope\":\"user\"}": "25.0.5",
     "{\"source\":\"npm:@gotgenes/pi-autoformat\",\"scope\":\"user\"}": "5.1.11",
-    "{\"source\":\"npm:@narumitw/pi-starship\",\"scope\":\"user\"}": "0.65.2"
+    "{\"source\":\"npm:@narumitw/pi-starship\",\"scope\":\"user\"}": "0.67.1",
+    "{\"source\":\"npm:pi-context-view\",\"scope\":\"user\"}": "0.8.3",
+    "{\"source\":\"npm:pi-web-access\",\"scope\":\"user\"}": "0.47.0",
+    "{\"source\":\"npm:@sfroment/pi-obsidian\",\"scope\":\"project\"}": "1.0.15",
+    "{\"source\":\"npm:@mrclrchtr/supi-ask-user\",\"scope\":\"user\"}": "11.3.0"
   }
 }

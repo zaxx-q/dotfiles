@@ -127,8 +127,8 @@ If needed, these get automatically installed for you by DotFriedRice.
 
 ## Launcher
 
-| Package                                  | Description                                |
-| :--------------------------------------- | :----------------------------------------- |
+| Package | Description |
+| :------ | :---------- |
 
 ## File manager
 
@@ -160,21 +160,21 @@ Custom fonts (such as Nerd Fonts) are managed through the `fonts` lists (`defaul
 
 ## Apps
 
-| Package           | Description                                                          |
-| :---------------- | :------------------------------------------------------------------- |
-| chromium          | A web browser built for speed, simplicity, and security              |
-| firefox           | Fast, Private & Safe Web Browser                                     |
-| kitty             | Fast, feature-rich, GPU-accelerated terminal emulator                |
-| gimp              | GNU Image Manipulation Program                                       |
-| kdenlive          | A non-linear video editor for Linux using the MLT video framework    |
-| keepassxc         | Cross-platform community-driven port of Keepass password manager     |
-| libreoffice-fresh | LibreOffice branch containing new features and enhancements          |
-| mpv               | Free, open source, cross-platform media player                       |
-| obs-studio        | Free, open source software for live streaming and recording          |
-| zathura           | Minimalistic document viewer                                         |
-| zathura-djvu      | DjVu support for Zathura                                             |
-| zathura-pdf-mupdf | Supports PDF, ePub, and OpenXPS for Zathura                          |
-| virt-manager      | Desktop user interface for managing virtual machines                 |
+| Package           | Description                                                       |
+| :---------------- | :---------------------------------------------------------------- |
+| chromium          | A web browser built for speed, simplicity, and security           |
+| firefox           | Fast, Private & Safe Web Browser                                  |
+| kitty             | Fast, feature-rich, GPU-accelerated terminal emulator             |
+| gimp              | GNU Image Manipulation Program                                    |
+| kdenlive          | A non-linear video editor for Linux using the MLT video framework |
+| keepassxc         | Cross-platform community-driven port of Keepass password manager  |
+| libreoffice-fresh | LibreOffice branch containing new features and enhancements       |
+| mpv               | Free, open source, cross-platform media player                    |
+| obs-studio        | Free, open source software for live streaming and recording       |
+| zathura           | Minimalistic document viewer                                      |
+| zathura-djvu      | DjVu support for Zathura                                          |
+| zathura-pdf-mupdf | Supports PDF, ePub, and OpenXPS for Zathura                       |
+| virt-manager      | Desktop user interface for managing virtual machines              |
 
 # Fedora notes
 
@@ -204,18 +204,19 @@ GitHub releases if you want them:
 | `mpd-mpris`       | Compile with go or use mpdris2 or fork of it: mpd2mpris   |
 | `pacman-contrib`  | pacman-specific, not relevant on Fedora (use `dnf clean`) |
 | `yay-bin` _(AUR)_ | AUR helper, not needed on Fedora                          |
+| `shfmt`           | Installed via `mise` (retired from Fedora repos in F45)   |
 
 The following packages are available on Fedora through additional repositories
 that DotFriedRice enables automatically:
 
-| Package    | Source                     |
-| :--------- | :------------------------- |
+| Package | Source |
+| :------ | :----- |
 
-| `niri`     | COPR `yalter/niri-git`     |
-| `lact`     | Terra repository           |
-| `satty`    | Terra repository           |
-| `rmpc`     | Terra repository           |
-| `wiremix`  | Official Fedora repository |
+| `niri` | COPR `yalter/niri-git` |
+| `lact` | Terra repository |
+| `satty` | Terra repository |
+| `rmpc` | Terra repository |
+| `wiremix` | Official Fedora repository |
 
 RPM Fusion (free + nonfree) and the Terra repository are enabled automatically
 so that `ffmpeg`, `gimp` plugins, multimedia codecs, `lact`, `satty`, `rmpc`
