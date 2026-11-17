@@ -164,3 +164,4 @@ application/vnd.openxmlformats-officedocument.wordprocessingml.document=ai.story
 application/vnd.ms-powerpoint=ai.storyteller.deckcraft.desktop;
 text/plain=losslesscut.desktop;
 application/schema+json=com.microsoft.VSCode.desktop;
+image/gif=mpv.desktop;imv.desktop;

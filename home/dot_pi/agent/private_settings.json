@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "1.5.0",
+  "lastChangelogVersion": "1.5.2",
   "npmCommand": [
     "bun"
   ],
@@ -158,8 +158,8 @@
     {
       "source": "npm:@router-for-me/pi-cliproxyapi-provider",
       "extensions": [
-        "+extensions/tps.ts",
-        "+extensions/index.ts"
+        "+extensions/index.ts",
+        "+extensions/tps.ts"
       ]
     },
     {
@@ -177,7 +177,12 @@
         "-index.ts"
       ]
     },
-    "npm:pi-web-access",
+    {
+      "source": "npm:pi-web-access",
+      "extensions": [
+        "+dist/index.js"
+      ]
+    },
     "npm:@ssk_dev/pi-docs-slim"
   ],
   "theme": "noctalia",
@@ -213,10 +218,10 @@
     "{\"source\":\"npm:@dreki-gg/pi-modes\",\"scope\":\"user\"}": "0.1.4",
     "{\"source\":\"npm:@gotgenes/pi-subagents\",\"scope\":\"user\"}": "25.0.5",
     "{\"source\":\"npm:@gotgenes/pi-autoformat\",\"scope\":\"user\"}": "5.1.11",
-    "{\"source\":\"npm:@narumitw/pi-starship\",\"scope\":\"user\"}": "0.67.1",
-    "{\"source\":\"npm:pi-context-view\",\"scope\":\"user\"}": "0.8.3",
+    "{\"source\":\"npm:@narumitw/pi-starship\",\"scope\":\"user\"}": "0.67.2",
+    "{\"source\":\"npm:pi-context-view\",\"scope\":\"user\"}": "0.8.4",
     "{\"source\":\"npm:pi-web-access\",\"scope\":\"user\"}": "0.47.0",
     "{\"source\":\"npm:@sfroment/pi-obsidian\",\"scope\":\"project\"}": "1.0.15",
-    "{\"source\":\"npm:@mrclrchtr/supi-ask-user\",\"scope\":\"user\"}": "11.3.0"
+    "{\"source\":\"npm:@mrclrchtr/supi-ask-user\",\"scope\":\"user\"}": "12.0.0"
   }
 }

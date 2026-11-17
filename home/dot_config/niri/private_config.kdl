@@ -24,7 +24,6 @@ spawn-at-startup "uwsm-app" "-s" "b" "--" "noctalia"
 
 // spawn-at-startup "swayidle" "-w"
 // spawn-at-startup "waybar"
-spawn-sh-at-startup "sleep 1; uwsm-app -s b mpd-mpris"
 // spawn-at-startup "kdeconnectd"
 
 // ----------------------------------------------------------------------------
@@ -577,12 +576,14 @@ binds {
     Ctrl+Shift+Print  hotkey-overlay-title="Screenshot (screen)" { spawn "noctalia" "msg" "screenshot-fullscreen"; }
     Shift+Print       hotkey-overlay-title="Screenshot (window)" { screenshot-window; }
     Ctrl+Print        hotkey-overlay-title="Screenshot and annotate" { spawn "tensaku" "--capture"; }
-    Alt+Print         hotkey-overlay-title="Screenshot toolkit menu" { spawn "noctalia" "msg" "plugin" "alexander/screen-toolkit:service" "all" "toggle"; }
+    // Alt+Print      hotkey-overlay-title="Screenshot toolkit menu" { spawn "noctalia" "msg" "plugin" "alexander/screen-toolkit:service" "all" "toggle"; }
     Mod+O             hotkey-overlay-title="Annotation tool" { spawn "wayscriber" "--active"; }
     Mod+Y             hotkey-overlay-title="Cast focused window" { spawn-sh "niri msg action set-dynamic-cast-window --id $(niri msg --json focused-window | jq .id)"; }
     Mod+Alt+Y         hotkey-overlay-title="Mirror focused monitor to a window" repeat=false { spawn-sh "wl-mirror $(niri msg --json focused-output | jq -r .name)"; }
     Mod+U             hotkey-overlay-title="Pin to screen (frozen)" { spawn "pin-to-screen" "--noctalia"; }
     Mod+Alt+U         hotkey-overlay-title="Select region to float / pin to screen" { spawn "pin-to-screen"; }
+    Alt+Print         hotkey-overlay-title="Screen Toolkit" { spawn "screen-toolkit"; }
+    Mod+Alt+C         hotkey-overlay-title="Open default chat app" { spawn "launch-or-cycle" "zapfast:/home/zaxx//AppImages/zapfast.appimage"; }
 
     // #"Media & Hardware"
     XF86HangupPhone         hotkey-overlay-title="Previous track" allow-when-locked=true { spawn "noctalia" "msg" "media" "previous"; }
@@ -648,7 +649,7 @@ binds {
 
     // #"Layout"
     Mod+C             hotkey-overlay-title="Center column" { center-column; }
-    Mod+Alt+C         hotkey-overlay-title="Center all visible columns" { center-visible-columns; }
+    Mod+Shift+C         hotkey-overlay-title="Center all visible columns" { center-visible-columns; }
     Mod+BracketLeft   hotkey-overlay-title="Consume / expel window to the left" { consume-or-expel-window-left; }
     Mod+BracketRight  hotkey-overlay-title="Consume / expel window to the right" { consume-or-expel-window-right; }
     Mod+Comma         hotkey-overlay-title="Consume window into column" { consume-window-into-column; }
