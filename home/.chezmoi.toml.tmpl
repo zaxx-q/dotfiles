@@ -5,7 +5,8 @@
 
   `chezmoi init` writes the whole file again, so everything else that's in
   [data] right now (your per machine overrides) is copied over below. Without
-  that, running `init` again would silently drop them.
+  that, running `init` again would silently drop them. Only [data] and [hooks]
+  are written, any other section that you added by hand is dropped.
 
   This is the chezmoi version of what bootstrap + dotfriedrice used to detect:
   the distro, WSL / container, GUI eligibility and your name + email.
@@ -64,8 +65,17 @@
 {{- $_ := set $data "wsl" $wsl -}}
 {{- $_ := set $data "container" $container -}}
 {{- $_ := set $data "gui" $gui -}}
+
+{{- /*
+  `chezmoi re-add` skips the files of .chezmoidata/keep.yaml and `chezmoi add`
+  would break them, these hooks (.system/keep-readd.sh) deal with both.
+*/ -}}
+{{- $hook := dict "command" "bash" "args" (list (printf "%s/.system/keep-readd.sh" .chezmoi.sourceDir)) -}}
+{{- $hooks := dict "re-add" (dict "post" $hook) "add" (dict "pre" $hook) -}}
 # Written by `chezmoi init` (home/.chezmoi.toml.tmpl). name, email, signingkey
-# and gui are your answers, distro, wsl and container are detected.
+# and gui are your answers, distro, wsl and container are detected. [hooks] is
+# what makes `chezmoi re-add` work for the files of .chezmoidata/keep.yaml, and
+# stops `chezmoi add` from breaking them.
 #
 # Per machine overrides can go in [data] too and are kept when `chezmoi init`
 # runs again. Everything that can be overridden is in home/.chezmoidata/.
@@ -75,4 +85,4 @@
 #
 #   [data.packages.fedora]
 #     cli_extras = ["keyd", "trans", "earlyoom"]
-{{ dict "data" $data | toToml }}
+{{ dict "data" $data "hooks" $hooks | toToml }}

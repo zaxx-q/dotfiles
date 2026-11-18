@@ -1,0 +1,28 @@
+{{- /*
+  For modify_ templates, to manage a file but leave a few parts of it alone: a
+  window position, a "last seen version", whatever the app rewrites by itself.
+
+  Prints the file of the repo (.base, a path inside the source dir that starts
+  with a dot so chezmoi doesn't treat it as a file of its own), except that every
+  regex of .keep which matches in the file as it is on this machine (.stdin)
+  gets the text of this machine instead. Everything else is copied byte for
+  byte, so the app can rewrite the file and chezmoi sees no change as long as
+  only those parts moved. A regex without a match on this machine (a new
+  machine, or the app didn't write it yet) leaves the repo's text in place.
+
+  Each regex is multiline: ^ and $ match at the line ends. Keep it to the part
+  that changes, "key": "value" without the comma after it for JSON, so the
+  commas around it come from the repo and the file stays valid.
+
+  Use it from a modify_ template, see dot_pi/agent/modify_private_settings.json.
+  The arguments are base (the path of the repo file), stdin (always
+  .chezmoi.stdin) and keep (a list of regexes). Which files and regexes there
+  are is in .chezmoidata/keep.yaml.
+*/ -}}
+{{- $out := include .base -}}
+{{- range .keep -}}
+{{-   $pattern := printf "(?m)%s" . -}}
+{{-   $current := regexFind $pattern $.stdin -}}
+{{-   if $current }}{{ $out = regexReplaceAllLiteral $pattern $out $current }}{{ end -}}
+{{- end -}}
+{{ $out -}}

@@ -1,0 +1,13 @@
+{{- /*
+  The reverse of modify-keep, for keep-readd.sh (the hook of `chezmoi re-add`).
+  chezmoi can't re-add the files of .chezmoidata/keep.yaml itself, their source
+  is a modify_ template and not a copy of the file.
+
+  Prints the file of this machine (the KEEP_DEST environment variable) except
+  that the parts that match the patterns of KEEP_TARGET get the text of the
+  repo copy. So everything the app changed ends up in the repo, and what it
+  rewrites by itself (lastChangelogVersion) stays as the repo has it, and git
+  sees no change in it.
+*/ -}}
+{{- $entry := index .keep (env "KEEP_TARGET") -}}
+{{ includeTemplate "modify-keep" (dict "base" (env "KEEP_DEST") "stdin" (include $entry.base) "keep" $entry.patterns) -}}

@@ -1,0 +1,73 @@
+{{- if and (eq .chezmoi.os "linux") (ne .distro "unsupported") -}}
+{{- /*
+  The system changes that aren't a copy of a file from .system/files/ (those are
+  in run_after_10-system-files.sh.tmpl, which checks /etc itself). This is a
+  run_onchange_ script, it runs again when one of the hashes below changes.
+*/ -}}
+#!/usr/bin/env bash
+# resolv.conf:        a symlink to the systemd-resolved stub, no inputs
+{{- if .wsl }}
+# windows terminal:   {{ include ".system/wsl/windows-terminal-settings.json" | sha256sum }}
+{{- end }}
+# mask services:      {{ .mask_services | toJson | sha256sum }}
+{{ template "prelude" . }}
+
+SYSTEM_DIR="{{ .chezmoi.sourceDir }}/.system"
+
+_info "INSTALL SYSTEM SETTINGS"
+
+{{ if or (eq .distro "arch") (eq .distro "fedora") }}
+# Both distros use the systemd-resolved stub resolver. Leave WSL and containers
+# alone since they manage /etc/resolv.conf themselves.
+if [[ "${OS_IN_WSL}" != "1" && "${OS_IN_CONTAINER}" != "1" ]]; then
+  if [ "$(readlink /etc/resolv.conf || true)" != "/run/systemd/resolve/stub-resolv.conf" ]; then
+    sudo ln -fns /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+    echo "'/etc/resolv.conf' now points to the systemd-resolved stub"
+  else
+    _skipping "'/etc/resolv.conf' already points to the systemd-resolved stub"
+  fi
+fi
+{{ end }}
+
+{{ if eq .distro "arch" }}
+# A symlink here is a leftover of the old setup, an optional 02-ignore.conf is
+# not part of this repo anymore. A real file is yours and gets left alone.
+if sudo test -L /etc/pacman.d/02-ignore.conf; then
+  sudo rm -f /etc/pacman.d/02-ignore.conf
+fi
+{{ end }}
+
+{{ if .wsl }}
+# WSL 2 (/etc/wsl.conf is installed with the other system files)
+# shellcheck disable=SC2016
+windows_user="$(powershell.exe '$env:UserName' 2>/dev/null | tr -d '\r\n' || true)"
+
+if [ -n "${windows_user}" ]; then
+  windows_terminal_dir="/mnt/c/Users/${windows_user}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState"
+
+  if [ -d "${windows_terminal_dir}" ]; then
+    cp "${SYSTEM_DIR}/wsl/windows-terminal-settings.json" "${windows_terminal_dir}/settings.json" || true
+    echo "Windows Terminal settings copied to '${windows_terminal_dir}'"
+  else
+    _warning "Windows Terminal's settings directory wasn't found for '${windows_user}', skipping"
+  fi
+else
+  _warning "Could not determine your Windows user name, skipping the Windows Terminal settings"
+fi
+{{ end }}
+
+{{ if .mask_services }}
+# Units that slow down boot and aren't needed.
+{{- range .mask_services }}
+if command -v systemctl >/dev/null 2>&1 && systemctl cat {{ . | quote }} >/dev/null 2>&1; then
+  if [ "$(systemctl is-enabled {{ . | quote }} 2>/dev/null || true)" != "masked" ]; then
+    sudo systemctl disable {{ . | quote }} || true
+    sudo systemctl mask {{ . | quote }}
+    echo "'{{ . }}' has been disabled and masked"
+  else
+    _skipping "'{{ . }}' is already masked"
+  fi
+fi
+{{- end }}
+{{ end }}
+{{- end }}

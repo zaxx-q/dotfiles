@@ -103,7 +103,9 @@ chezmoi:check() {
     while IFS= read -r -d '' script; do
       rendered="${tmp}/${name}-${script//\//_}"
 
-      chezmoi --source "${repo}" --config "${tmp}/${name}.toml" execute-template <"${script}" >"${rendered}"
+      # The system files script renders to nothing when /etc matches the repo,
+      # which would skip it here, so it is told to render anyway.
+      DFR_SYSTEM_FILES_FORCE=1 chezmoi --source "${repo}" --config "${tmp}/${name}.toml" execute-template <"${script}" >"${rendered}"
 
       # Scripts that render to nothing are skipped by chezmoi, that's fine.
       grep -q '[^[:space:]]' "${rendered}" || continue
@@ -131,23 +133,41 @@ _sys_read() {
   fi
 }
 
-_sys_scopes() {
-  # The folders of home/.system/files/ that apply to this machine.
-  local distro gui
-  read -r distro gui <<<"$(chezmoi --source "${1}" execute-template '{{ .distro }} {{ .gui }}')"
+_sys_files() {
+  # The files this machine installs outside of $HOME as lines of
+  # "<file in the repo>|<destination>|...". It's the same list that
+  # `chezmoi apply` installs, see home/.chezmoitemplates/system-files.
+  local files
 
-  if [ -z "${distro}" ]; then
-    echo "Couldn't read the distro of this machine, has 'chezmoi init' been run?" >&2
+  if ! files="$(chezmoi --source "${1}" execute-template '{{ template "system-files" . }}' 2>&1)"; then
+    echo "Couldn't list the system files of this machine, has 'chezmoi init' been run?" >&2
+    echo "${files}" >&2
     return 1
   fi
 
-  echo "all"
-  echo "${distro}"
+  echo "${files}"
+}
 
-  if [ "${gui}" == "true" ]; then
-    echo "gui"
-    echo "${distro}-gui"
+_sys_exists() {
+  # Whether a path exists, with sudo only when this user can't tell because the
+  # closest folder that exists is one it can't enter.
+  local dir
+
+  if [ -e "${1}" ] || [ -L "${1}" ]; then
+    return 0
   fi
+
+  dir="$(dirname -- "${1}")"
+
+  while [ ! -e "${dir}" ] && [ "${dir}" != "/" ]; do
+    dir="$(dirname -- "${dir}")"
+  done
+
+  if [ -x "${dir}" ]; then
+    return 1
+  fi
+
+  sudo test -e "${1}"
 }
 
 sys:add() {
@@ -228,32 +248,32 @@ sys:add() {
     echo "${path} -> ${dest#"${repo}/"}"
   done
 
-  echo "Installed by 'chezmoi apply' from now on (the system files script runs again)."
+  echo "Installed by 'chezmoi apply' from now on, on the machines where it differs."
 }
 
 sys:diff() {
   # Compare the system files in the repo with what is installed in / on this
-  # machine, exits with 1 when something differs. For edits made directly in
-  # /etc that you want to keep, run sys:add on the file again.
-  local repo scopes scope scope_dir src dest differs=0
+  # machine, exits with 1 when something differs. These are the files that
+  # `chezmoi apply` installs, and it installs the ones listed here again when
+  # they differ. Sudo is only used for what this user can't read. For edits made
+  # directly in /etc that you want to keep, run sys:add on the file again.
+  local repo files src dest differs=0
   repo="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  scopes="$(_sys_scopes "${repo}")"
+  files="$(_sys_files "${repo}")"
 
-  while IFS= read -r scope; do
-    scope_dir="${repo}/home/.system/files/${scope}"
-    [ -d "${scope_dir}" ] || continue
+  while IFS="|" read -r src dest _; do
+    [ -n "${src}" ] || continue
 
-    while IFS= read -r -d '' src; do
-      dest="/${src#"${scope_dir}/"}"
-
-      if ! [ -e "${dest}" ] && ! sudo test -e "${dest}"; then
-        echo "missing: ${dest}"
-        differs=1
-      elif ! diff -u --label "installed ${dest}" --label "repo ${src#"${repo}/"}" <(_sys_read "${dest}") "${src}"; then
-        differs=1
-      fi
-    done < <(find "${scope_dir}" -type f -print0 | sort -z)
-  done <<<"${scopes}"
+    if ! _sys_exists "${dest}"; then
+      echo "missing: ${dest}"
+      differs=1
+    elif [ -L "${dest}" ]; then
+      echo "symlink: ${dest}, chezmoi apply replaces it with a copy of the file"
+      differs=1
+    elif ! diff -u --label "installed ${dest}" --label "repo ${src#"${repo}/"}" <(_sys_read "${dest}") "${src}"; then
+      differs=1
+    fi
+  done <<<"${files}"
 
   if [ "${differs}" == "0" ]; then
     echo "The system files match the repo"

@@ -233,8 +233,56 @@ a link is the point:
 
 The bun links are chezmoi `symlink_` entries. They show up as dangling until
 the mise script has installed bun, which is fine. `~/.XCompose` is one too.
-`resolv.conf` is created by `run_onchange_after_10-system-files`, because chezmoi
+`resolv.conf` is created by `run_onchange_after_11-system-settings`, because chezmoi
 only manages `~`.
+
+## Files an app rewrites
+
+Some apps change their own config every time they run, pi's
+`lastChangelogVersion` and the window position that xarchiver saves in
+`mainwindow=`. chezmoi would show those files as modified all the time. For
+them the repo keeps the wanted content in a hidden file, and a `modify_`
+template puts the machine's own text back in just those lines:
+
+| File on the machine               | Wanted content, in the repo              | Left alone on the machine         |
+| :-------------------------------- | :--------------------------------------- | :-------------------------------- |
+| `~/.pi/agent/settings.json`       | `home/dot_pi/agent/.settings.json`       | `"lastChangelogVersion": "..."`   |
+| `~/.config/xarchiver/xarchiverrc` | `home/dot_config/xarchiver/.xarchiverrc` | the `mainwindow=` line            |
+
+`chezmoi status` is clean while only those parts moved and `chezmoi apply` keeps
+them. The rest of the file is still managed, so any other change shows up and
+is reverted as usual. It's copied byte for byte (pi writes no newline at the end
+of its file, and neither does the copy), and a new machine gets the repo's
+values until the app writes its own. The files and what is left alone are in
+`home/.chezmoidata/keep.yaml`.
+
+**Take changes from the app with `chezmoi re-add`**, as for any other file, all
+of them or just one (`chezmoi re-add ~/.pi/agent/settings.json`). chezmoi
+skips these files on its own, since their source is a template and not a copy of
+the file, and it can't run a template backwards. So `chezmoi re-add` has a hook
+(`home/.system/keep-readd.sh`) that does it: it copies the file of the machine
+into the hidden file of the repo, except for the parts that the app rewrites by
+itself, which stay as the repo has them, so git doesn't see them change. It
+prints a line for each file it updated, then you commit.
+
+The hooks are in `chezmoi.toml`, which `chezmoi init` writes, so run
+`chezmoi init` once on each machine after you pull this. (It writes the whole
+file again and only keeps `[data]`, so a section you added to it by hand,
+outside of `[data]`, is gone.) `chezmoi add` on one of these files is refused by
+the same script:
+chezmoi would delete the `modify_` file and put a plain copy in its place, with
+the lines that change on their own. Use `chezmoi re-add`. Without the hooks you
+can do the same with `home/.system/keep-readd.sh [file...]`.
+
+- To change the settings edit the hidden file next to the `modify_` file.
+  `chezmoi edit` opens the `modify_` file, which only says where to look.
+- To do the same for another file: rename its repo copy to a hidden name (chezmoi
+  ignores those), add an entry to `home/.chezmoidata/keep.yaml` with that name
+  and the regexes of what should be left alone, and add a `modify_` file next to
+  it, copy one of the two. `chezmoi re-add` handles it from then on. The
+  `modify_` file has no `.tmpl` ending, the `chezmoi:modify-template` line in it
+  is what makes it a template that gets the current file as `.chezmoi.stdin`.
+  `home/.chezmoitemplates/modify-keep` is the part that does the work.
 
 ## System files
 
@@ -261,20 +309,49 @@ repo is installed with mode 755, the others with 644.
 ```
 
 That copies it to the right folder (`sudo` is only used for a file you can't
-read), commit it and the next `chezmoi apply` installs it. Run the command again
-to update the copy after you changed the file in `/etc`. Files that aren't world
-readable are refused unless you add `--force`, since they may hold secrets and
-the repo is public. The script runs again by itself when a file in a scope of
-the machine changes.
+read), commit it and the next `chezmoi apply` installs it on the machines where
+it differs. Run the command again to update the copy after you changed the file
+in `/etc`. Files that aren't world readable are refused unless you add
+`--force`, since they may hold secrets and the repo is public.
 
-**Compare** with what's installed: `./run sys:diff` shows what differs between
-the repo and `/` on this machine and exits with 1 if anything does. It's one
-way: edits made in `/etc` aren't picked up until you `sys:add` the file again.
+**`chezmoi status` and `chezmoi apply` look at `/etc` too.** chezmoi can't see
+outside of `~`, so the script does it: while chezmoi reads the repo,
+`home/.system/files-state.sh` compares each system file of this machine with
+the installed one (without `sudo`). If they all match, the script renders to
+nothing and chezmoi skips it, so `chezmoi status` is clean and `chezmoi apply`
+doesn't ask for your password. If a file is missing, has other content or is a
+symlink left over from the old setup, the script shows up in `chezmoi status`
+as `R`, and `chezmoi apply` installs those files. `chezmoi diff` can only show
+the script, since chezmoi doesn't manage `/etc`, but the top of it lists the
+files that are out of date and a diff of what would change in each one (the
+whole file for one that is missing). That covers a file you deleted, one you
+edited in `/etc`, and one that changed in the repo after a `chezmoi update`.
 
-Things to know: a file you remove from the repo stays on the machines that
-already have it. The first time a different real file gets replaced, a `.bak`
-copy is kept next to it. A few files that need a condition (keyd, `dnf.conf`,
-the niri session, WSL) are still listed by hand in the script instead.
+The repo wins. A change you made directly in `/etc` is replaced at the next
+`chezmoi apply`: the difference is printed, and the first time a real file gets
+replaced a `.bak` copy is kept next to it. Run `sys:add` on the file first to
+keep the edit.
+
+**Compare** by hand: `./run sys:diff` shows what differs between the repo and
+`/` on this machine and exits with 1 if anything does. It checks the same list
+of files as `chezmoi apply`, and only uses `sudo` for a file you can't read. It's
+one way: edits made in `/etc` aren't picked up until you `sys:add` the file again.
+
+Things to know:
+
+- A file you remove from the repo stays on the machines that already have it.
+- The list of files, with the conditions (kanata when it's one of your packages,
+  `dnf.conf` on Fedora, the niri session, WSL), is
+  `home/.chezmoitemplates/system-files`. Only the files of that list are checked.
+- A file this user can't read (mode 600, or in a folder it can't enter) can't be
+  compared without `sudo`. For those the script keeps the hash of the repo copy
+  it installed last in `~/.local/state/dfr/system-files/`, and installs again when
+  the repo copy changes. An edit made in `/etc` to such a file isn't noticed,
+  `./run sys:diff` does see it.
+- To go over every file, in sync or not: `DFR_SYSTEM_FILES_FORCE=1 chezmoi apply`.
+- Not a copy of a file, so not part of this: `resolv.conf`, masked units and the
+  Windows Terminal settings. `after_11-system-settings` does those, it's a
+  normal `run_onchange_` script.
 
 ## What's in the repo
 
@@ -287,13 +364,14 @@ the niri session, WSL) are still listed by hand in the script instead.
 | `home/.chezmoiignore`                                    | Which targets a machine doesn't get (desktop-less, skipped, ...)                                                                        |
 | `home/.chezmoiexternal.toml.tmpl`                        | Things chezmoi downloads (tpm, scripts from GitHub)                                                                                     |
 | `home/.chezmoiscripts/`                                  | The install scripts                                                                                                                     |
-| `home/.chezmoitemplates/`                                | Shared bits for the scripts (shell prelude, package lists)                                                                              |
+| `home/.chezmoitemplates/`                                | Shared bits for the scripts and files (shell prelude, package lists, the list of system files, `modify-keep`)                           |
 | `home/.system/`                                          | Files that go outside of `~`, copied by a script. `files/<scope>/` is installed to `/` automatically, see [System files](#system-files) |
 | `_docs/`                                                 | Notes on the package lists and the optional scripts, plus a one-off helper that moved a machine off an old symlink based setup          |
-| `run`                                                    | Lint and format helper, also what CI runs                                                                                               |
+| `run`                                                    | Lint and format helper (also what CI runs), `sys:add` and `sys:diff` for the system files                                               |
 
 Only `dot_config/zsh/dot_xdg.local.tmpl` and a few other `*.tmpl` configs that
-need your home directory or your machine's facts are templates. Everything else
+need your home directory or your machine's facts are templates, apart from the
+`modify_` files of [Files an app rewrites](#files-an-app-rewrites). Everything else
 is copied as is.
 
 ## Settings
@@ -369,13 +447,15 @@ install them on Windows.
 Scripts live in `home/.chezmoiscripts/`. `run_onchange_*` ones run again only
 when their rendered content changes, which includes the package lists or files
 they depend on. To force them all to run again, see
-[Day to day workflow](#day-to-day-workflow).
+[Day to day workflow](#day-to-day-workflow). `after_10-system-files` is the
+exception: it checks `/etc` itself, see [System files](#system-files).
 
 | Script                       | Does                                                                                                                          |
 | :--------------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
 | `before_00-create-dirs`      | Creates the directories programs expect                                                                                       |
 | `before_10-install-packages` | Packages for Fedora, Arch (pacman + AUR), Debian and macOS, GPU / Wi-Fi / Bluetooth detection, RPM Fusion, Terra, COPRs, mise |
-| `after_10-system-files`      | `/etc` and `/usr/share` files from `home/.system/` (all of `files/<scope>/`), resolv.conf, WSL files, masked units            |
+| `after_10-system-files`      | `/etc` and `/usr/share` files from `home/.system/` (all of `files/<scope>/`), only when one is missing or differs             |
+| `after_11-system-settings`   | resolv.conf, masked units, the Windows Terminal settings on WSL                                                               |
 | `after_20-sudoers-udev`      | sudoers.d entries (checked with `visudo`) and udev rules, if any are set                                                      |
 | `after_21-services-groups`   | Enables services and adds you to `docker` / `libvirt` (desktop only)                                                          |
 | `after_22-docker-desktop`    | `pass init` for Docker Desktop, only if you added that package                                                                |

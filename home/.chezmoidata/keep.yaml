@@ -1,0 +1,19 @@
+# Files that an app rewrites by itself: pi's lastChangelogVersion, the window
+# position that xarchiver saves. chezmoi manages these files, except for the parts
+# that match `patterns`, those keep the text of the machine. See "Files an app
+# rewrites" in the README, it also says how to add one.
+#
+# The key is the path in ~. `base` is the copy in the repo, a file that starts
+# with a dot so chezmoi doesn't manage it itself, relative to home/. It sits
+# next to the modify_ file of the target. Each pattern is a Go regexp that
+# matches over lines (^ and $ are line ends). Match only what changes, without
+# a comma after it for JSON, so the commas come from the repo.
+keep:
+  ".pi/agent/settings.json":
+    base: dot_pi/agent/.settings.json
+    patterns:
+      - '"lastChangelogVersion":\s*"[^"]*"'
+  ".config/xarchiver/xarchiverrc":
+    base: dot_config/xarchiver/.xarchiverrc
+    patterns:
+      - '^mainwindow=.*$'

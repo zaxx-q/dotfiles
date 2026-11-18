@@ -1,0 +1,142 @@
+{{- if and (eq .chezmoi.os "linux") (ne .distro "unsupported") -}}
+{{- /*
+  Files that live outside of $HOME (/etc, /usr/share, ...). chezmoi can only
+  manage $HOME, so these are copied with sudo. This replaces the `sudo ln -fns`
+  / `sudo install` entries of CONFIG_INSTALL_* in the old dotfriedrice setup.
+
+  This is a plain run_ script, not run_onchange_. A run_onchange_ script only
+  knows if its own text changed, it never looks at /etc. So here the text is
+  decided by what's on disk: while rendering, files-state.sh compares every
+  file in the list below with the installed one (without sudo). When all of
+  them match, this renders to nothing and chezmoi skips the script, that's a
+  quiet `chezmoi apply` and a clean `chezmoi status`. When one is missing or
+  different (you deleted it, edited it, or pulled a change to it), the script
+  renders and `chezmoi status` shows it under R until `chezmoi apply` installs
+  it. `chezmoi diff` shows the script, since chezmoi can't diff /etc. At the top
+  of it are the files that are out of date and what would change in them, and
+  only those get installed.
+
+  What gets installed is in .chezmoitemplates/system-files, which has the
+  conditions. Most files don't need to be listed anywhere: everything in
+  .system/files/<scope>/ is installed to the same path under /. Add one with
+  `./run sys:add /etc/some/file`. The things that aren't a copy of a file
+  (resolv.conf, masked units, the Windows Terminal settings) are in
+  run_onchange_after_11-system-settings.sh.tmpl.
+*/ -}}
+
+{{- /* Every file of this machine as [repo file, destination, backup, unit]. */ -}}
+{{- $files := list -}}
+{{- range (includeTemplate "system-files" . | trim | splitList "\n") -}}
+{{-   if . }}{{ $files = append $files (splitList "|" .) }}{{ end -}}
+{{- end -}}
+
+{{- /* Ask files-state.sh about each one, it prints ok, differs or missing. */ -}}
+{{- $input := "" -}}
+{{- range $files }}{{ $input = printf "%s%s|%s\n" $input (index . 0) (index . 1) }}{{ end -}}
+{{- $helper := printf "%s/.system/files-state.sh" $.chezmoi.sourceDir -}}
+{{- $states := list -}}
+{{- if $files -}}
+{{-   $states = output "bash" $helper $input | trim | splitList "\n" -}}
+{{- end -}}
+
+{{- /* If the answers don't line up with the files, assume that all are out of date. */ -}}
+{{- $stale := list -}}
+{{- $todo := list -}}
+{{- $changes := "" -}}
+{{- range $i, $file := $files -}}
+{{-   $state := "differs" -}}
+{{-   if eq (len $states) (len $files) }}{{ $state = index $states $i }}{{ end -}}
+{{-   if ne $state "ok" -}}
+{{-     $stale = append $stale (printf "%s (%s)" (index $file 1) $state) -}}
+{{-     $todo = append $todo $file -}}
+{{-     $diff := output "bash" $helper "--diff" (printf "%s|%s\n" (index $file 0) (index $file 1)) | trim -}}
+{{-     if $diff }}{{ $changes = printf "%s%s\n" $changes (regexReplaceAll "(?m)^" $diff "#   ") }}{{ end -}}
+{{-   end -}}
+{{- end -}}
+
+{{- /* DFR_SYSTEM_FILES_FORCE=1 chezmoi apply goes over all of them anyway. `./run chezmoi:check` uses it too. */ -}}
+{{- if env "DFR_SYSTEM_FILES_FORCE" }}{{ $todo = $files }}{{ end -}}
+
+{{- if or $stale $todo -}}
+#!/usr/bin/env bash
+# Out of date:
+{{- range $stale }}
+#   {{ . }}
+{{- end }}
+{{- if $changes }}
+#
+# What chezmoi apply is going to change:
+{{ $changes -}}
+{{- end }}
+{{ template "prelude" . }}
+
+_info "INSTALL SYSTEM FILES"
+
+SYSTEM_FILES_RECORDS="${XDG_STATE_HOME}/dfr/system-files"
+
+# Keep a one time backup of a real file that is about to be replaced.
+_sys_backup_once() {
+  local path="${1}"
+
+  if sudo test -f "${path}" && ! sudo test -L "${path}" && ! sudo test -e "${path}.bak"; then
+    sudo cp -a "${path}" "${path}.bak"
+    echo "Backed up '${path}' to '${path}.bak'"
+  fi
+}
+
+# Copy a file of the repo to a root owned location, but only when it differs.
+# A file that is executable in the repo gets mode 755, the others 644.
+#
+#   $1 the file in the repo
+#   $2 where it goes
+#   $3 1 to keep a one time backup of a real file that it replaces
+#   $4 a systemd unit to restart when the file changed, if it's running
+_sys_file() {
+  local src="${1}"
+  local dest="${2}"
+  local backup="${3}"
+  local unit="${4:-}"
+  local mode=644
+  local changed=0
+
+  if [ -x "${src}" ]; then
+    mode=755
+  fi
+
+  # A symlink is what the old dotfriedrice setup created, replace it with a
+  # real file so the repo is no longer referenced from /etc.
+  if sudo test -L "${dest}"; then
+    sudo rm -f "${dest}"
+  fi
+
+  if sudo test -f "${dest}" && sudo cmp -s "${src}" "${dest}"; then
+    _skipping "'${dest}' didn't change"
+  else
+    if sudo test -f "${dest}"; then
+      if [ "${backup}" == "1" ]; then
+        _sys_backup_once "${dest}"
+      fi
+
+      echo "'${dest}' is not the same as the repo, replacing it:"
+      sudo diff -u --label "installed ${dest}" --label "repo" "${dest}" "${src}" || true
+    fi
+
+    sudo install -Dm"${mode}" "${src}" "${dest}"
+    echo "'${dest}' has been installed"
+    changed=1
+  fi
+
+  # Files that this user can't read are compared with this by files-state.sh.
+  mkdir -p "${SYSTEM_FILES_RECORDS}"
+  sha256sum -- "${src}" | cut -d " " -f 1 >"${SYSTEM_FILES_RECORDS}/${dest//\//%}"
+
+  if [ "${changed}" == "1" ] && [ -n "${unit}" ] && systemctl is-active --quiet "${unit}" 2>/dev/null; then
+    sudo systemctl restart "${unit}" || true
+  fi
+}
+
+{{ range $todo -}}
+_sys_file {{ template "shquote" (index . 0) }} {{ template "shquote" (index . 1) }} {{ index . 2 }} {{ template "shquote" (index . 3) }}
+{{ end -}}
+{{- end -}}
+{{- end -}}

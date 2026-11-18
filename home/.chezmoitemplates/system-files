@@ -1,0 +1,59 @@
+{{- /*
+  Prints every file that this machine installs outside of $HOME, one per line:
+
+    <file in the repo>|<where it goes>|<backup>|<unit>
+
+  backup: 1 keeps a one time .bak copy of a real file that gets replaced.
+  unit:   a systemd unit to restart when the file changes, if it's running.
+
+  Two things use this list, so they can't disagree about what is installed:
+  the system files script (to find out what is out of date, and to install it)
+  and `./run sys:diff`.
+
+  The conditions in here are the ones that used to be spread over the script.
+  Everything in .system/files/<scope>/ goes to the same path under /, see the
+  README.
+*/ -}}
+{{- $sys := printf "%s/.system" .chezmoi.sourceDir -}}
+
+{{- /* The folders of .system/files/ that apply to this machine. */ -}}
+{{- $scopes := list "all" .distro -}}
+{{- if .gui }}{{ $scopes = concat $scopes (list "gui" (printf "%s-gui" .distro)) }}{{ end -}}
+
+{{- /* kanata only when it's one of the packages of this machine. */ -}}
+{{- if includeTemplate "effective-packages" . | regexMatch "(?m)^\\s*\"kanata\"\\s*$" }}
+{{ $sys }}/etc/kanata/config.kbd|/etc/kanata/config.kbd|0|kanata.service
+{{- end }}
+
+{{- /* The niri session that gets listed in your display / login manager. */ -}}
+{{- if .gui }}
+{{ $sys }}/usr/share/wayland-sessions/niri-uwsm.desktop|/usr/share/wayland-sessions/niri-uwsm.desktop|0|
+{{-   if not (has "networkd-wait-online-timeout" .skip.system) }}
+{{ $sys }}/etc/systemd/system/systemd-networkd-wait-online.service.d/99-network-timeout.conf|/etc/systemd/system/systemd-networkd-wait-online.service.d/99-network-timeout.conf|0|
+{{-   end }}
+{{- end }}
+
+{{- /* Arch: pacman-contrib, which provides paccache. */ -}}
+{{- if eq .distro "arch" }}
+{{ $sys }}/etc/conf.d/pacman-contrib|/etc/conf.d/pacman-contrib|1|
+{{- end }}
+
+{{- /* Fedora: DNF options such as parallel downloads and fastest mirror. */ -}}
+{{- if eq .distro "fedora" }}
+{{ $sys }}/etc/dnf/dnf.conf|/etc/dnf/dnf.conf|1|
+{{- end }}
+
+{{- /* Everything in .system/files/<scope>/. */ -}}
+{{- range $scope := $scopes }}
+{{-   $dir := printf "%s/files/%s" $sys $scope }}
+{{-   range (glob (printf "%s/**/*" $dir)) }}
+{{-     if not (stat .).isDir }}
+{{ . }}|{{ trimPrefix $dir . }}|1|
+{{-     end }}
+{{-   end }}
+{{- end }}
+
+{{- /* WSL 2 (the Windows Terminal settings are in the system settings script). */ -}}
+{{- if .wsl }}
+{{ $sys }}/etc/wsl.conf|/etc/wsl.conf|0|
+{{- end }}

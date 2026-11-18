@@ -1,0 +1,10 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- /*
+  ~/.config/xarchiver/xarchiverrc. Xarchiver rewrites the window position and
+  size (mainwindow=) every time it closes, so this machine's value is kept and
+  the rest comes from .xarchiverrc next to this file. To change the settings
+  edit that file, not this one. `chezmoi re-add` takes changes from the app,
+  see .chezmoidata/keep.yaml.
+*/ -}}
+{{- $entry := index .keep ".config/xarchiver/xarchiverrc" -}}
+{{ includeTemplate "modify-keep" (dict "base" $entry.base "stdin" .chezmoi.stdin "keep" $entry.patterns) -}}
