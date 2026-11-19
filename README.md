@@ -310,9 +310,10 @@ repo is installed with mode 755, the others with 644.
 
 That copies it to the right folder (`sudo` is only used for a file you can't
 read), commit it and the next `chezmoi apply` installs it on the machines where
-it differs. Run the command again to update the copy after you changed the file
-in `/etc`. Files that aren't world readable are refused unless you add
-`--force`, since they may hold secrets and the repo is public.
+it differs. This is for a new file. After you changed one that is already in the
+repo, `chezmoi re-add` takes the change, see below. Files that aren't world
+readable are refused unless you add `--force`, since they may hold secrets and
+the repo is public.
 
 **`chezmoi status` and `chezmoi apply` look at `/etc` too.** chezmoi can't see
 outside of `~`, so the script does it: while chezmoi reads the repo,
@@ -329,13 +330,35 @@ edited in `/etc`, and one that changed in the repo after a `chezmoi update`.
 
 The repo wins. A change you made directly in `/etc` is replaced at the next
 `chezmoi apply`: the difference is printed, and the first time a real file gets
-replaced a `.bak` copy is kept next to it. Run `sys:add` on the file first to
-keep the edit.
+replaced a `.bak` copy is kept next to it. Run `chezmoi re-add` first to keep
+the edit.
+
+**Take changes from `/etc` with `chezmoi re-add`**, as for the files in `~`.
+chezmoi only knows `~`, so its `re-add` has a hook (`home/.system/keep-readd.sh`,
+the one of [Files an app rewrites](#files-an-app-rewrites), nothing more to set
+up) that copies the system files you changed into the repo, what `sys:add` does.
+It prints a line for each file, then you commit. Some limits:
+
+- It's the plain `chezmoi re-add`, with no path. chezmoi itself refuses a path
+  outside of `~` (`not in destination directory`) before the hook gets to run,
+  and a path in `~` such as `chezmoi re-add ~/.zshrc` means only that file. To
+  take one system file, run the script by hand:
+  `home/.system/keep-readd.sh /etc/kanata/config.kbd`.
+- Only files that are in the list below. A new file is for `./run sys:add`.
+- A file that changed in the repo since it was installed, say after a
+  `git pull`, isn't overwritten with the old copy in `/etc`, you get a line
+  that says so and `chezmoi apply` installs it. It's the same when it changed
+  in both places, `./run sys:diff` shows the two. The script knows from the hash
+  of what it installed last, which it keeps in `~/.local/state/dfr/system-files/`.
+  Without one (a file that was never installed by it) the file is taken over, as
+  chezmoi does for the files in `~`.
+- A file that isn't world readable is left alone, it may hold secrets and the
+  repo is public, `./run sys:add --force` does it.
 
 **Compare** by hand: `./run sys:diff` shows what differs between the repo and
 `/` on this machine and exits with 1 if anything does. It checks the same list
-of files as `chezmoi apply`, and only uses `sudo` for a file you can't read. It's
-one way: edits made in `/etc` aren't picked up until you `sys:add` the file again.
+of files as `chezmoi apply`, and only uses `sudo` for a file you can't read. It
+only looks, `chezmoi re-add` is what takes the changes.
 
 Things to know:
 

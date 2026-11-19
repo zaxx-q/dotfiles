@@ -173,7 +173,8 @@ _sys_exists() {
 sys:add() {
   # Copy a file from outside of $HOME into the repo, so that `chezmoi apply`
   # installs it on every machine it applies to (see home/.system/files/). Run it
-  # again on a file to update the copy. Files in $HOME are for `chezmoi add`.
+  # again on a file to update the copy, or use `chezmoi re-add` for the files
+  # that are already in the repo. Files in $HOME are for `chezmoi add`.
   #
   #   ./run sys:add /etc/greetd/config.toml
   #   ./run sys:add --scope fedora-gui /etc/greetd/config.toml
