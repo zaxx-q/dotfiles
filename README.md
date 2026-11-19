@@ -239,15 +239,15 @@ only manages `~`.
 ## Files an app rewrites
 
 Some apps change their own config every time they run, pi's
-`lastChangelogVersion` and the window position that xarchiver saves in
-`mainwindow=`. chezmoi would show those files as modified all the time. For
+`lastChangelogVersion` and the extension versions it keeps, or the window
+position that xarchiver saves in `mainwindow=`. chezmoi would show those files as modified all the time. For
 them the repo keeps the wanted content in a hidden file, and a `modify_`
 template puts the machine's own text back in just those lines:
 
-| File on the machine               | Wanted content, in the repo              | Left alone on the machine         |
-| :-------------------------------- | :--------------------------------------- | :-------------------------------- |
-| `~/.pi/agent/settings.json`       | `home/dot_pi/agent/.settings.json`       | `"lastChangelogVersion": "..."`   |
-| `~/.config/xarchiver/xarchiverrc` | `home/dot_config/xarchiver/.xarchiverrc` | the `mainwindow=` line            |
+| File on the machine               | Wanted content, in the repo              | Left alone on the machine                                             |
+| :-------------------------------- | :--------------------------------------- | :-------------------------------------------------------------------- |
+| `~/.pi/agent/settings.json`       | `home/dot_pi/agent/.settings.json`       | `"lastChangelogVersion"` and the `"extensionChangelogVersions"` block |
+| `~/.config/xarchiver/xarchiverrc` | `home/dot_config/xarchiver/.xarchiverrc` | the `mainwindow=` line                                                |
 
 `chezmoi status` is clean while only those parts moved and `chezmoi apply` keeps
 them. The rest of the file is still managed, so any other change shows up and

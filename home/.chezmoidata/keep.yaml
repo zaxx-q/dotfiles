@@ -13,6 +13,9 @@ keep:
     base: dot_pi/agent/.settings.json
     patterns:
       - '"lastChangelogVersion":\s*"[^"]*"'
+      # The whole block, one line per extension. Its keys hold braces themselves,
+      # so it's matched by its lines up to the closing brace, not by braces.
+      - '"extensionChangelogVersions":\s*\{(?:\s+"[^\n]*)*\s*\}'
   ".config/xarchiver/xarchiverrc":
     base: dot_config/xarchiver/.xarchiverrc
     patterns:

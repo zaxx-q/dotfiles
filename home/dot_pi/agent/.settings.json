@@ -220,7 +220,7 @@
     "{\"source\":\"npm:@gotgenes/pi-autoformat\",\"scope\":\"user\"}": "5.1.11",
     "{\"source\":\"npm:@narumitw/pi-starship\",\"scope\":\"user\"}": "0.67.2",
     "{\"source\":\"npm:pi-context-view\",\"scope\":\"user\"}": "0.8.4",
-    "{\"source\":\"npm:pi-web-access\",\"scope\":\"user\"}": "0.47.0",
+    "{\"source\":\"npm:pi-web-access\",\"scope\":\"user\"}": "0.48.0",
     "{\"source\":\"npm:@sfroment/pi-obsidian\",\"scope\":\"project\"}": "1.0.15",
     "{\"source\":\"npm:@mrclrchtr/supi-ask-user\",\"scope\":\"user\"}": "12.0.0"
   }

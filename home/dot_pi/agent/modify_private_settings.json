@@ -1,8 +1,8 @@
 {{- /* chezmoi:modify-template */ -}}
 {{- /*
-  ~/.pi/agent/settings.json. pi rewrites lastChangelogVersion every time it
-  updates, so this machine's value is kept and the rest comes from
-  .settings.json next to this file. To change the settings edit that file, not
+  ~/.pi/agent/settings.json. pi rewrites lastChangelogVersion and the whole
+  extensionChangelogVersions block every time it updates, so this machine's text
+  is kept for those and the rest comes from .settings.json next to this file. To change the settings edit that file, not
   this one. `chezmoi re-add` takes changes from the app, see .chezmoidata/keep.yaml.
 */ -}}
 {{- $entry := index .keep ".pi/agent/settings.json" -}}
