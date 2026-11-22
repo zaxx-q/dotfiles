@@ -126,7 +126,7 @@
 	<name>Add to Bookmarks</name>
 	<submenu></submenu>
 	<unique-id>1788518931959208-3</unique-id>
-	<command>{{ .chezmoi.homeDir }}/.local/bin/local/bookmarks-add %F</command>
+	<command>bookmarks-add %F</command>
 	<description>Add to Noctalia Bookmarks plugin data</description>
 	<range>*</range>
 	<patterns>*</patterns>
@@ -164,7 +164,7 @@
 	<name>Convert for DaVinci Resolve (Fast)</name>
 	<submenu>Video</submenu>
 	<unique-id>resolve-convert-lb-20260912</unique-id>
-	<command>{{ .chezmoi.homeDir }}/.local/bin/resolve-convert --thunar convert lb %F</command>
+	<command>resolve-convert --thunar convert lb %F</command>
 	<description>Convert in-place to DNxHR LB / PCM directly beside this file</description>
 	<range>*</range>
 	<patterns>*</patterns>
@@ -176,7 +176,7 @@
 	<name>Convert for DaVinci Resolve (High Quality)</name>
 	<submenu>Video</submenu>
 	<unique-id>resolve-convert-sq-20260912</unique-id>
-	<command>{{ .chezmoi.homeDir }}/.local/bin/resolve-convert --thunar convert sq %F</command>
+	<command>resolve-convert --thunar convert sq %F</command>
 	<description>Convert in-place to DNxHR SQ / PCM directly beside this file</description>
 	<range>*</range>
 	<patterns>*</patterns>
@@ -188,7 +188,7 @@
 	<name>Export Web MP4 (Fast AMD)</name>
 	<submenu>Video</submenu>
 	<unique-id>resolve-deliver-fast-20260912</unique-id>
-	<command>{{ .chezmoi.homeDir }}/.local/bin/resolve-convert --thunar deliver fast %F</command>
+	<command>resolve-convert --thunar deliver fast %F</command>
 	<description>Encode video in-place to H.264/AAC MP4 using AMD hardware</description>
 	<range>*</range>
 	<patterns>*</patterns>
@@ -199,7 +199,7 @@
 	<name>Export Web MP4 (Best Quality CPU)</name>
 	<submenu>Video</submenu>
 	<unique-id>resolve-deliver-quality-20260912</unique-id>
-	<command>{{ .chezmoi.homeDir }}/.local/bin/resolve-convert --thunar deliver quality %F</command>
+	<command>resolve-convert --thunar deliver quality %F</command>
 	<description>Encode video in-place to high quality H.264/AAC MP4 using CPU x264</description>
 	<range>*</range>
 	<patterns>*</patterns>
@@ -215,6 +215,28 @@
 	<range>*</range>
 	<patterns>*</patterns>
 	<video-files/>
+</action>
+<action>
+	<icon>image-x-generic</icon>
+	<name>Compare Images (odiff)</name>
+	<submenu>Compare</submenu>
+	<unique-id>odiff-compare-20261114</unique-id>
+	<command>odiff-compare %F</command>
+	<description>Select exactly 2 images: pixel-by-pixel compare with odiff and open the diff image</description>
+	<range>2</range>
+	<patterns>*</patterns>
+	<image-files/>
+</action>
+<action>
+	<icon>image-x-generic</icon>
+	<name>Compare Images (odiff, save diff beside)</name>
+	<submenu>Compare</submenu>
+	<unique-id>odiff-compare-save-20261114</unique-id>
+	<command>odiff-compare --save %F</command>
+	<description>Select exactly 2 images: compare with odiff and save the diff PNG next to the first image</description>
+	<range>2</range>
+	<patterns>*</patterns>
+	<image-files/>
 </action>
 <action>
 	<icon>audio-volume-low</icon>
@@ -268,7 +290,7 @@
 	<name>Convert to WebP</name>
 	<submenu></submenu>
 	<unique-id>1791505529038504-1</unique-id>
-	<command>bash -c &apos;if {{ .chezmoi.homeDir }}/.local/bin/convert img2webp &quot;$@&quot;; then if [ &quot;$#&quot; -eq 1 ]; then msg=&quot;Converted 1 image to WebP&quot;; else msg=&quot;Converted $# images to WebP&quot;; fi; notify-send &quot;Convert to WebP&quot; &quot;$msg&quot; -i image-x-generic; else notify-send -u critical &quot;Convert to WebP&quot; &quot;Failed to convert image(s)&quot; -i dialog-error; fi&apos; _ %F</command>
+	<command>bash -c &apos;if ~/.local/bin/convert img2webp &quot;$@&quot;; then if [ &quot;$#&quot; -eq 1 ]; then msg=&quot;Converted 1 image to WebP&quot;; else msg=&quot;Converted $# images to WebP&quot;; fi; notify-send &quot;Convert to WebP&quot; &quot;$msg&quot; -i image-x-generic; else notify-send -u critical &quot;Convert to WebP&quot; &quot;Failed to convert image(s)&quot; -i dialog-error; fi&apos; _ %F</command>
 	<description>Convert image(s) to WebP</description>
 	<range>*</range>
 	<patterns>*</patterns>

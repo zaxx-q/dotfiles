@@ -124,9 +124,12 @@ Templates see your machine's facts. Print them with `chezmoi data`:
 
 **An app changed its own config** (the pi agent, ...). Run `chezmoi diff`,
 then `chezmoi re-add` to take the new version into the repo, then commit.
-`re-add` skips templates, so use `chezmoi merge <target>` for those. A few files
-are only created, never overwritten, so edit them freely on a machine:
-`~/.config/mise/config.toml`, `~/.config/git/config.local`,
+`re-add` skips templates, so use `chezmoi merge <target>` for those, it opens
+VS Code. Better, keep a file that an app rewrites out of the templates: Thunar's
+`uca.xml` used `{{ .chezmoi.homeDir }}` for a few paths and couldn't be
+re-added, it calls the scripts by name now (they are on `PATH`, see
+`dot_config/zsh/env.sh`). A few files are only created, never overwritten, so
+edit them freely on a machine: `~/.config/mise/config.toml`, `~/.config/git/config.local`,
 `~/.config/kitty/kitty.conf.local`, `~/.config/niri/config.kdl.local`,
 `~/.config/zsh/.zprofile.local`, `~/.config/lazygit/config.yml`,
 `~/.config/xfce4/.../thunar.xml` and `~/.pi/agent/trust.json`.
@@ -209,7 +212,7 @@ Change:
 | `chezmoi git -- <args>`                            | Run git in the repo                                                             |
 | `chezmoi add <path>`                               | Start tracking a file or directory (`--template`)                               |
 | `chezmoi re-add`                                   | Take changed files from `~` into the repo, not templates                        |
-| `chezmoi merge <target>`                           | Merge the file in `~` with the repo's version in your merge tool, for templates |
+| `chezmoi merge <target>`                           | Merge the file in `~` with the repo's version in VS Code, for templates         |
 | `chezmoi forget <target>`                          | Stop tracking, keep the file                                                    |
 | `chezmoi execute-template '{{ .distro }}'`         | Try a template expression                                                       |
 | `chezmoi state delete-bucket --bucket=scriptState` | Make every script run again at the next apply                                   |
@@ -418,8 +421,9 @@ when `chezmoi init` runs again. Lists are replaced, not merged. For example:
 `[data]` is the only part of that file that is yours to edit. `chezmoi init`
 writes the whole file again from `home/.chezmoi.toml.tmpl`, and the rest of it
 comes from there: `[hooks]` (the ones of `chezmoi re-add`, `chezmoi add` and
-`chezmoi diff`) and `[diff]`, which leaves scripts out of `chezmoi diff` and
-pages it with `delta`. Any other section you add by hand, `[diff]` or `[git]`
+`chezmoi diff`), `[diff]`, which leaves scripts out of `chezmoi diff` and
+pages it with `delta`, and `[merge]`, which makes `chezmoi merge` use VS Code
+(`code` has to be in your `PATH`, chezmoi's default is vimdiff). Any other section you add by hand, `[diff]` or `[git]`
 for example, is gone at the next `chezmoi init`. To change one for every
 machine, edit it in the template and run `chezmoi init` (chezmoi says "config
 file template has changed" when you have to).
