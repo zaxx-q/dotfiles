@@ -19,6 +19,12 @@
 # Include English, Indonesian, and Japanese subtitles (auto-generated too).
 --sub-langs "en.*,id,ja"
 
+# Always download subtitles, with fallback to auto-generated subs.
+--write-subs --write-auto-subs
+
+# Remove leftover subtitle files
+--compat-options no-keep-subs
+
 # ──────────────────────────────────────────────────────────────────────
 # SponsorBlock
 # ──────────────────────────────────────────────────────────────────────

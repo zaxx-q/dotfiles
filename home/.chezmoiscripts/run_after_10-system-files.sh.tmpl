@@ -14,7 +14,8 @@
   renders and `chezmoi status` shows it under R until `chezmoi apply` installs
   it. `chezmoi diff` shows the script, since chezmoi can't diff /etc. At the top
   of it are the files that are out of date and what would change in them, and
-  only those get installed.
+  only those get installed. The generated config leaves scripts out of `chezmoi
+  diff`, there .system/system-diff.sh prints the same text after it.
 
   What gets installed is in .chezmoitemplates/system-files, which has the
   conditions. Most files don't need to be listed anywhere: everything in

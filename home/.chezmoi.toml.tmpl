@@ -5,8 +5,8 @@
 
   `chezmoi init` writes the whole file again, so everything else that's in
   [data] right now (your per machine overrides) is copied over below. Without
-  that, running `init` again would silently drop them. Only [data] and [hooks]
-  are written, any other section that you added by hand is dropped.
+  that, running `init` again would silently drop them. Only [data], [hooks]
+  and [diff] are written, any other section that you added by hand is dropped.
 
   This is the chezmoi version of what bootstrap + dotfriedrice used to detect:
   the distro, WSL / container, GUI eligibility and your name + email.
@@ -71,11 +71,22 @@
   would break them, these hooks (.system/keep-readd.sh) deal with both.
 */ -}}
 {{- $hook := dict "command" "bash" "args" (list (printf "%s/.system/keep-readd.sh" .chezmoi.sourceDir)) -}}
-{{- $hooks := dict "re-add" (dict "post" $hook) "add" (dict "pre" $hook) -}}
+
+{{- /*
+  `chezmoi diff` leaves out scripts and pages with delta (git-delta is in the
+  package lists). The system files script would show the changes of /etc at the
+  top of it, which is what leaving scripts out hides, so this hook prints them
+  after the diff instead (.system/system-diff.sh). Keep the two together.
+*/ -}}
+{{- $diffHook := dict "command" "bash" "args" (list (printf "%s/.system/system-diff.sh" .chezmoi.sourceDir)) -}}
+{{- $diff := dict "exclude" (list "scripts") "pager" "delta" -}}
+
+{{- $hooks := dict "re-add" (dict "post" $hook) "add" (dict "pre" $hook) "diff" (dict "post" $diffHook) -}}
 # Written by `chezmoi init` (home/.chezmoi.toml.tmpl). name, email, signingkey
 # and gui are your answers, distro, wsl and container are detected. [hooks] is
 # what makes `chezmoi re-add` work for the files of .chezmoidata/keep.yaml, and
-# stops `chezmoi add` from breaking them.
+# stops `chezmoi add` from breaking them, and [diff] is how `chezmoi diff` looks.
+# Don't edit this file, `chezmoi init` writes it again from the template.
 #
 # Per machine overrides can go in [data] too and are kept when `chezmoi init`
 # runs again. Everything that can be overridden is in home/.chezmoidata/.
@@ -85,4 +96,4 @@
 #
 #   [data.packages.fedora]
 #     cli_extras = ["keyd", "trans", "earlyoom"]
-{{ dict "data" $data "hooks" $hooks | toToml }}
+{{ dict "data" $data "diff" $diff "hooks" $hooks | toToml }}

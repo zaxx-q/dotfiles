@@ -322,11 +322,14 @@ the installed one (without `sudo`). If they all match, the script renders to
 nothing and chezmoi skips it, so `chezmoi status` is clean and `chezmoi apply`
 doesn't ask for your password. If a file is missing, has other content or is a
 symlink left over from the old setup, the script shows up in `chezmoi status`
-as `R`, and `chezmoi apply` installs those files. `chezmoi diff` can only show
-the script, since chezmoi doesn't manage `/etc`, but the top of it lists the
-files that are out of date and a diff of what would change in each one (the
-whole file for one that is missing). That covers a file you deleted, one you
-edited in `/etc`, and one that changed in the repo after a `chezmoi update`.
+as `R`, and `chezmoi apply` installs those files. chezmoi doesn't manage `/etc`,
+so it can't diff those files. `chezmoi diff` leaves scripts out (`[diff]` in the
+config, see [Settings](#settings)), and a hook (`home/.system/system-diff.sh`)
+prints what would change after its own diff: a diff for each system file that is
+out of date, the whole file for one that is missing, and nothing when they all
+match. Without a hook, the top of the script has the same text. That covers a
+file you deleted, one you edited in `/etc`, and one that changed in the repo
+after a `chezmoi update`.
 
 The repo wins. A change you made directly in `/etc` is replaced at the next
 `chezmoi apply`: the difference is printed, and the first time a real file gets
@@ -382,7 +385,7 @@ Things to know:
 | :------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
 | `home/`                                                  | The chezmoi source (`.chezmoiroot` points here)                                                                                         |
 | `home/dot_*`, `home/private_*`, `home/executable_*`, ... | Files for `~`, with chezmoi's [naming](https://www.chezmoi.io/reference/source-state-attributes/)                                       |
-| `home/.chezmoi.toml.tmpl`                                | Detects the machine and asks the `init` questions                                                                                       |
+| `home/.chezmoi.toml.tmpl`                                | Detects the machine and asks the `init` questions, and writes the hooks and `[diff]` settings of `chezmoi.toml`                         |
 | `home/.chezmoidata/`                                     | Settings: packages, mise, fonts, services, skip lists                                                                                   |
 | `home/.chezmoiignore`                                    | Which targets a machine doesn't get (desktop-less, skipped, ...)                                                                        |
 | `home/.chezmoiexternal.toml.tmpl`                        | Things chezmoi downloads (tpm, scripts from GitHub)                                                                                     |
@@ -411,6 +414,15 @@ when `chezmoi init` runs again. Lists are replaced, not merged. For example:
   [data.packages.fedora]
     cli_extras = ["keyd", "trans", "earlyoom"]
 ```
+
+`[data]` is the only part of that file that is yours to edit. `chezmoi init`
+writes the whole file again from `home/.chezmoi.toml.tmpl`, and the rest of it
+comes from there: `[hooks]` (the ones of `chezmoi re-add`, `chezmoi add` and
+`chezmoi diff`) and `[diff]`, which leaves scripts out of `chezmoi diff` and
+pages it with `delta`. Any other section you add by hand, `[diff]` or `[git]`
+for example, is gone at the next `chezmoi init`. To change one for every
+machine, edit it in the template and run `chezmoi init` (chezmoi says "config
+file template has changed" when you have to).
 
 `packages.yaml` holds the package lists per distro
 (`packages.<distro>.{cli,gui,aur,aur_gui,brew,cask}`, each with `_extras` and

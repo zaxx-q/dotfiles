@@ -12,38 +12,66 @@
   esc
   caps
   henkan
+  bspc
   muhenkan
   katakanahiragana
   ¥
   ro
-  a  h  j  k  l  ;  u  d
+  a  h  j  k  l  ;  u  d  c
 )
 
 (defalias
   ;; CapsLock: tap → Esc, hold → Meta
-  ;; Meta activates instantly on press. If released within 250ms without
-  ;; pressing another key, Meta is released and Esc is tapped instead.
+  ;; Mirrors keyd's `capslock = overload(meta, esc)` with `overload_tap_timeout = 250`:
+  ;;
+  ;;   * Meta goes down the instant CapsLock is pressed (like keyd), so Super+mouse
+  ;;     and Super+key chords work immediately.
+  ;;   * Esc is sent ONLY if CapsLock is released within 250ms AND no other key was
+  ;;     pressed while it was down. In that case Meta is released and Esc is tapped
+  ;;     once (press + release). Esc is never held.
+  ;;   * Pressing any other key while CapsLock is down => it's a Meta chord, no Esc.
+  ;;   * Holding longer than 250ms => just Meta, no Esc.
+  ;;
+  ;; IMPORTANT: the FIRST number of tap-hold-press (tap-repress-timeout) must stay 0.
+  ;; keyd has no such feature. In kanata, if it is non-zero, then tapping and
+  ;; re-pressing the key within that window runs the TAP action immediately and
+  ;; HOLDS it until you let go => double-tapping CapsLock held Esc (and the OS
+  ;; then auto-repeats it). 0 disables that behaviour.
+  ;;
+  ;; Also keep `process-unmapped-keys yes` in defcfg: it makes kanata see ALL keys,
+  ;; so that pressing any key (even ones not listed in defsrc) cancels the Esc.
   cap (multi
         lmet
-        (tap-hold-press 250 250
-          (multi (release-key lmet) esc)  ;; tap: undo Meta, send Esc
+        (tap-hold-press 0 250
+          (multi (release-key lmet) esc)  ;; tap: undo Meta, send Esc once
           XX                              ;; hold: nop (Meta already active)
         )
       )
 
   ;; Muhenkan: hold → nav layer
   nav (layer-toggle nav)
+
+  ;; Caps-word: capitalises the word you're typing, then turns itself off.
+  ;; Lives on nav layer (hold Muhenkan, press c) so it can't be hit by accident.
+  ;;   * a-z are shifted, `-` becomes `_` (handy for CONSTANT_NAMES).
+  ;;   * Digits, Backspace, Delete and arrow keys do NOT end it.
+  ;;   * Space / punctuation / any other key ends it. So does 2s of idle time.
+  ;;   * Pressing the same key again also ends it (that's the -toggle variant).
+  capsw (caps-word-toggle 2000)
 )
 
 (deflayer default
   esc           ;; esc → pass through (was commented out in keyd)
   @cap          ;; caps → tap Esc / hold Meta
-  bspc          ;; henkan → backspace
+  bspc          ;; henkan → backspace (the thumb key is now THE backspace)
+  caps          ;; physical backspace → Caps Lock (use henkan / katakanahiragana for backspace).
+                ;;   Habit-press safety: swap `caps` for @capsw to get caps-word instead (self-ending).
+                ;;   To restore the key, change it to bspc.
   @nav          ;; muhenkan → hold for nav layer
-  caps          ;; katakanahiragana → capslock
+  bspc          ;; katakanahiragana → backspace too (wider target: it sits next to henkan)
   menu          ;; yen → compose (KEY_COMPOSE, aliased as <MENU> in XKB)
   lsft          ;; ro → shift
-  a  h  j  k  l  ;  u  d
+  a  h  j  k  l  ;  u  d  c
 )
 
 (deflayer nav
@@ -54,5 +82,6 @@
   _
   _
   _
-  home  left  down  up  right  end  pgup  pgdn
+  _
+  home  left  down  up  right  end  pgup  pgdn  @capsw
 )
