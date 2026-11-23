@@ -566,6 +566,6 @@ installed via `mise` (`mise use --global shfmt`).
 ## Credits
 
 This started as a fork of [nickjj/dotfriedrice](https://github.com/nickjj/dotfriedrice)
-(MIT, see [LICENSE](LICENSE)). The package lists, many of the scripts and the
+(MIT). The package lists, many of the scripts and the
 layout of the configs come from there. The optional scripts in
 `external_scripts` are nickjj's own projects.
